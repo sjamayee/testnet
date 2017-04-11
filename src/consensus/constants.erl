@@ -17,6 +17,8 @@ initial_difficulty() -> 12*256.%for testing purposes only
 %6452.
 difficulty_bits() -> 24.
 
+hash_size() -> 12.
+
 finality() -> 26.%/docs/security.py explains why.
 address_entropy() -> 96.
 %master_pub() -> <<"QkF4eUUvV2htL1NyMG5PTmJjN2pjaXlBZjhvNHZSZXhOc0ovaVZweVRpMmxTd0lMb0ZJTm1JUjNVdDNpMGRTaEIrd1FzNnA1QStRbmdZeStmTGY4ZzRvPQ==">>.
@@ -82,10 +84,6 @@ keys() -> root() ++ "keys.db".
 top() -> root() ++ "top.db".
 channel_manager() -> root() ++ "channel_manager.db".
 word_size() -> 100000.
-
-hash_size() -> 12.
-
-
 balance_bits() -> 48.%total number of coins is 2^(balance_bits()).
 half_bal() -> round(math:pow(2, balance_bits()-1)).
 acc_bits() -> hash_size()*8.%total number of accounts is 2^(acc_bits()) 800 billion.
@@ -102,6 +100,7 @@ channel_delay_bits() -> 32. %2^this is the maximum amount of blocks you could ha
 	     (balance_bits()*4) + channel_nonce_bits() + 
 	     (height_bits()*2) + 
 	     channel_entropy() + channel_delay_bits())).
+		       
 account_padding() ->    
     8 - (?AccountSizeWithoutPadding rem 8).
 channel_padding() ->

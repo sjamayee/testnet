@@ -5,7 +5,9 @@
 	 read/1,binary_to_file/1,block/1,prev_hash/2,
 	 prev_hash/1,read_int/1,check1/1,pow_block/1,
 	 mine_blocks/2, hashes/1, block_to_header/1,
-	 median_last/2]).
+	 median_last/2,
+	 guess_number_of_cpu_cores/0
+	]).
 
 -record(block, {height, prev_hash, txs, channels, 
 		accounts, mines_block, time, 
@@ -229,7 +231,6 @@ check1(BP) ->
 	    Header = block_to_header(Block),
 	    Header = pow:data(PowBlock),
 	    true = pow:above_min(PowBlock, Difficulty, constants:hash_size()),
- 
 	    true = Block#block.time < time_now(),
 	    {BH, Block#block.prev_hash}
     end.
@@ -386,7 +387,7 @@ mine_blocks(N, Times) ->
     %io:fwrite(" diff "),
     %io:fwrite(integer_to_list(Block#block.difficulty)),
     %erlang:system_info(logical_processors_available)
-    Cores = erlang:system_info(logical_processors_available),
+    Cores = guess_number_of_cpu_cores(),
     %io:fwrite(" using "),
     %io:fwrite(integer_to_list(Cores)),
     %io:fwrite(" CPU"),
@@ -407,3 +408,16 @@ spawn_many(0, _) -> ok;
 spawn_many(N, F) -> 
     spawn(F),
     spawn_many(N-1, F).
+guess_number_of_cpu_cores() ->    
+    X = erlang:system_info(logical_processors_available),
+    Y = if
+        X == unknown ->
+	    % Happens on Mac OS X.
+            erlang:system_info(schedulers);
+	is_integer(X) -> 
+	    %ubuntu
+	    X;
+	true -> io:fwrite("number of CPU unknown, only using 1"), 1
+	end,
+    min(Y, free_constants:cores_to_mine()).
+	

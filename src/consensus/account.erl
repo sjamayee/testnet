@@ -38,7 +38,6 @@ serialize(A) ->
     Baddr = testnet_sign:address2binary(Addr),
     SizeAddr = size(Baddr),
     SizeAddr = constants:hash_size(),
-    %SizeAddr = hash:hash_depth(),
     Nbits = constants:account_nonce_bits(),
     AP = constants:account_padding(),
     KL = key_length(),
@@ -57,7 +56,6 @@ serialize(A) ->
 deserialize(A) ->
     BAL = constants:balance_bits(),
     HEI = constants:height_bits(),
-    %HD = hash:hash_depth()*8,
     HD = constants:hash_size()*8,
     Nbits = constants:account_nonce_bits(),
     AP = constants:account_padding(),

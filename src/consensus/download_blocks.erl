@@ -74,7 +74,7 @@ trade_blocks(IP, Port, [PrevBlock|L], Height) ->
 	NextHash = block:hash(NextBlock),
 	    trade_blocks(IP, Port, [NextBlock|[PrevBlock|L]], Height - 1);
 	_ -> 
-	    %download 100 blocks earlier, to handle forks.
+						%download 100 blocks earlier, to handle forks.
 	    L2 = get_blocks(Height-1, free_constants:fork_tolerance(), IP, Port, []),
 	    case L2 of
 		error -> error;
