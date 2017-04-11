@@ -34,4 +34,4 @@ cd testnet/
 sh install.sh
 ```
 
-Installation should be done. Now you can run your node.
+Now you can run your node. with ```sh start.sh```
