@@ -9,7 +9,7 @@ Negative shares are more valuable when the blockchain's difficulty is expected t
 
 All shares have a half-life. They are either disappearing, or converting into AE tokens.
 If the difficulty is lower than the amount written on a share, only the negative form pays, the positive one disappears.
-If the difficulty is above the amount writte on the a share, then only the positive form pays, the negative one disappears.
+If the difficulty is above the amount written on the a share, then only the positive form pays, the negative one disappears.
 
 Owning these shares is a way to hedge against fluctuations in the price of the token.
 Looking at the market for shares is a way to predict where the price of the token is going.

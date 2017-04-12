@@ -1,5 +1,6 @@
 -module(commits).
 -export([get/2,write/3, test/0]).
+%for accessing the proof of existence tree
 
 get(Hash, Commits) ->
     true = is_binary(Hash),
