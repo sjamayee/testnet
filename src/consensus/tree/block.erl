@@ -241,6 +241,8 @@ check2(BP) ->
     %check that the time is later than the median of the last 100 blocks.
 
     %check2 assumes that the parent is in the database already.
+    PowBlock = pow_block(BP),
+    true = pow:check_pow(PowBlock, constants:hash_size()),
     Block = block(BP),
     true = Block#block.magic == constants:magic(),
     Difficulty = Block#block.difficulty,

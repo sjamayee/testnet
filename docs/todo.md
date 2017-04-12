@@ -1,3 +1,22 @@
+javascript light wallets need to be able to do all the channel stuff that full nodes do.
+
+
+right now there is only 1 type of currency stored on-chain, AE tokens.
+We want to store several thousand types.
+Each account will contain the merkle root of a trie containing all their tokens of the different types.
+Each type of token can be positive, or negative.
+If you own negative of type N, and you get positive of type N, they turn into normal AE tokens.
+The tokens have a half life. They are each either disappearing, or converting into AE tokens depending on the difficulty.
+If the difficulty is above e^(A*N) then the positive are converting to AE and the negative are disappearing.
+If the difficulty is below e^(A*N) then the positive are disappearing and the negative are converting to AE.
+A is a constant to set the step size between types.
+
+So the types of tokens are all bets about whether the difficulty will on average above or below a number.
+
+Channels should only hold AE tokens, but when a channel settles, it should be able to split the AE tokens into equal pairs of any of the types of tokens, and give one side of the pair to one account and the other side to the other account. This way we can use channels to trade all types of tokens.
+
+spend and create_account transactions should have a hashlock, so we can connect them to events on other blockchains.
+
 we should make sure block hashing, and other hashes are all formatted so it is easy to make a javascript wallet.
 
 
