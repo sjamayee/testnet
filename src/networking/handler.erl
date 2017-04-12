@@ -28,7 +28,7 @@ doit({give_block, SignedBlock}) ->
     {ok, 0};
 doit({block, N}) -> 
     {ok, block:pow_block(block:read_int(N))};
-doit({header, N}) -> {ok, pow:data(block:pow_block(block:read_int(N)))};
+doit({header, N}) -> {ok, block:block_to_header(block:block(block:read_int(N)))};
     %{ok, block_tree:read_int(N)};
 doit({tophash}) -> {ok, top:doit()};
 %doit({recent_hash, H}) -> {ok, block_tree:is_key(H)};
