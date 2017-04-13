@@ -10,8 +10,8 @@ make(From, Fee, Data) ->
 doit(Tx, Channels, Accounts, Commits, NewHeight) ->
     From = Tx#ex.from,
     C = Tx#ex.commit,
-    {_, empty, _} = commits:get(C, Commits),
-    NewCommits = commits:write(From, C, Commits),
+    {_, empty, _} = existence:get(C, Commits),
+    NewCommits = existence:write(From, C, Commits),
     Acc = account:update(From, Accounts, -Tx#ex.fee, Tx#ex.nonce, NewHeight),
     NewAccounts = accounts:write(Accounts, Acc),
     {Channels, NewAccounts, NewCommits}.

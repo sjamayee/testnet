@@ -1,11 +1,11 @@
--module(commits).
+-module(existence).
 -export([get/2,write/3, test/0]).
 %for accessing the proof of existence tree
 
-get(Hash, Commits) ->
+get(Hash, Tree) ->
     true = is_binary(Hash),
     ID = hash2ID(Hash),
-    {X, Leaf, Proof} = trie:get(ID, Commits, existence),
+    {X, Leaf, Proof} = trie:get(ID, Tree, existence),
     V = case Leaf of
 	    empty -> empty;
 	    L -> 
@@ -15,10 +15,10 @@ get(Hash, Commits) ->
 		Z
 	end,
     {X, V, Proof}.
-write(N, Hash, Commits) ->
+write(N, Hash, Tree) ->
     ID = hash2ID(Hash),
     AB = constants:acc_bits(),
-    trie:put(ID, <<N:AB>>, 0, Commits, existence).
+    trie:put(ID, <<N:AB>>, 0, Tree, existence).
 	     
 hash2ID(X) -> 
     S = size(X),

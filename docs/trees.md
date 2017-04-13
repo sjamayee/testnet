@@ -1,42 +1,51 @@
-How many merkel trees are there? What do they store?
+There are 8 merkel trees.
 
-* proof of burn
-* proof of existence
-* accounts
-* channels
-* active oracles
-* oracle results
-* shares
+* active oracles+
+* oracle results+
+* channels+
+* accounts+
 * oracle bets
+* shares
+* proof of burn+
+* proof of existence+
 
-=== proof of burn
+(The ones with +'s are included in the generation of the state-hash that is recorded on the block's header)
 
-The proof of burn tree stores by address. It stores the number of AE tokens that this address has burned.
+=== active oracles
 
-=== proof of existence
+These are the oracles that exist right now. They are stored by integer oracle id. Oracles never reuse the same id.
+This data is available to the VM.
+The hash of the text of the question is stored.
 
-This tree stores by hash. It stores the same hash that you use to look up the hash.
+=== oracle results
 
-=== accounts
-
-This tree stores accounts by integer id. Each account has 2 merkel roots. One is for a shares tree, the other is for an oracle bets tree.
+These are the results of oracles that have existed. They are stored by id.
+This data is available to the VM.
+The result is stored in 1 byte. Either it is 0 for false, 1 for true, or 2 if the questions was bad.
 
 === channels
 
 This tree stores channels by an integer channel id.
 
-=== active oracles
+=== accounts
 
-These are the oracles that exist right now. They are stored by integer oracle id. Oracles never reuse the same id.
-
-=== oracle results
-
-These are the results of oracles that have existed. They are stored by id.
-
-=== shares
-
-Each account has a tree of shares. The shares are stored by share id. Each type of share has a different id. The id of a share determines it's difficulty. You can own either a negative or positive amount of each type of share. Shares are transferable
+This tree stores accounts by integer id. Each account has 2 merkel roots written in them. One is for a shares tree, the other is for an oracle bets tree.
 
 === oracle bets
 
 Each account has a tree of oracle bets. Oracle bets are not transferable. Once an oracle is settled, the bets in it can be converted to shares.
+
+=== shares
+
+Each account has a tree of shares. The shares are stored by share id. The id of a share determines it's difficulty. You can own either a negative, positive, or zero amount of each type of share. Shares are transferable
+[you can read about shares here](docs/shares.md)
+
+=== proof of burn
+
+The proof of burn tree stores by address. It stores the number of AE tokens that this address has burned.
+This data is available to the VM.
+
+=== proof of existence
+
+This tree stores by hash. It returns a 1 if the thing exists, a 0 otherwise.
+This data is available to the VM.
