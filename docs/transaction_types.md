@@ -89,6 +89,8 @@ The oracle can only answer true/false questions.
 Running the oracle costs a fee which is used as a reward to get people to use the oracle.
 The fact that an oracle exists is recorded on the blockchain in a way that is accessible to the VM. So we can use channels to make smart contracts to raise funds to run the oracle.
 The entire text of the question is written into the transaction, but only the hash of the text is stored into a consensus state merkel tree.
+The oracle has a start-date written in it. Trading doesn't start until the start-date.
+The oracle can be published before we know the outcome of the question, that way the oracle id can be used to make channel contracts that bet on the eventual outcome of the oracle.
 
 # oracle_bet
 
