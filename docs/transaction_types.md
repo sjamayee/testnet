@@ -124,7 +124,10 @@ The difficulty of the shares was announced when the oracle was launched.
 This transaction adds 256 bits of data to the existence tree. This is done to prove that certain data existed at a certain time.
 The virtual machine can verify that data exists in the existence tree.
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 897e8989118453cc24c79adfa64ce9bcb3abd404
 # burn
 
 This destroys some coins in a provable way.

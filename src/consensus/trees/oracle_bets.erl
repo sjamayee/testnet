@@ -1,0 +1,2 @@
+-module(oracle_bets).
+-export([]).
