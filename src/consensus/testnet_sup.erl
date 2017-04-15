@@ -38,7 +38,8 @@ init([]) ->
 	     tree_child(active_oracles, KeyLength, constants:active_oracles_size()),
 	     tree_child(oracle_results, KeyLength, (constants:key_length() div 8) + 1),
 	     tree_child(burn, FullLength, (constants:balance_bits() div 8) + constants:hash_size()),
-	     tree_child(oracle_bets, KeyLength, (constants:key_length() + (constants:balance_bits() div 8)))
+	     tree_child(oracle_bets, KeyLength, (constants:key_length() + (constants:balance_bits() div 8))),
+	     tree_child(shares, KeyLength, (constants:key_length() + 1 + (constants:balance_bits() div 8)))
 	    ],
     {ok, { {one_for_one, 50000, 1}, Tries ++ Children} }.
 
