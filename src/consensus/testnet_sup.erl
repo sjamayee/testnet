@@ -35,7 +35,9 @@ init([]) ->
 	     tree_child(accounts, KeyLength, constants:account_size()),
 	     tree_child(channels, KeyLength, constants:channel_size()),
 	     tree_child(existence, FullLength, HashSize),
-	     tree_child(active_oracles, KeyLength, constants:active_oracles_size())
+	     tree_child(active_oracles, KeyLength, constants:active_oracles_size()),
+	     tree_child(oracle_results, KeyLength, (constants:key_length() div 8) + 1),
+	     tree_child(burn, FullLength, (constants:balance_bits() div 8) + constants:hash_size())
 	    ],
     {ok, { {one_for_one, 50000, 1}, Tries ++ Children} }.
 

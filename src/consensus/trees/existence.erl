@@ -1,5 +1,5 @@
 -module(existence).
--export([get/2,write/2,new/1, test/0]).
+-export([get/2,write/2,new/1,hash2int/1, test/0]).
 %for accessing the proof of existence tree
 -record(exist, {hash}).
 
