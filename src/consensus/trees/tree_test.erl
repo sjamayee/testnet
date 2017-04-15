@@ -9,5 +9,6 @@ test() ->
     S = active_oracles:test(),
     S = oracle_results:test(),
     S = burn:test(),
+    S = oracle_bets:test(),
     S.
     
