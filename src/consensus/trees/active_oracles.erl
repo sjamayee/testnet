@@ -1,5 +1,5 @@
 -module(active_oracles).
--export([new/2,write/2,get/2,id/1,question/1,starts/1,
+-export([new/3,write/2,get/2,id/1,question/1,starts/1,
 	 root_hash/1, test/0]).
 
 
@@ -14,28 +14,37 @@ id(X) -> X#active.id.
 question(X) -> X#active.question.
 starts(X) -> X#active.starts.
 
-new(Question, Starts) ->
-    ID = make_id(),
+new(Question, Starts, Root) ->
+    ID = make_id(Root),
     #active{id = ID, question = Question, starts = Starts}.
-make_id()->
-    0.
+make_id(Root)->
+    KL = constants:key_length(),
+    Max = round(math:pow(2, KL)),
+    R = crypto:rand_uniform(1, Max),
+    {_, E, _} = get(R, Root),
+    case E of
+	empty -> R;
+	true -> make_id(Root)
+    end.
 
 serialize(A) ->
     HEI = constants:height_bits(),
     Pad = constants:active_oracles_padding(),
     HS = constants:hash_size(),
+    Question = A#active.question,
+    HS = size(Question),
     KL = constants:key_length(),
     <<(A#active.id):KL,
-      (A#active.question):HS,
-      (A#active.starts):HEI, 
-      0:Pad>>.
+      (A#active.starts):HEI,
+      0:Pad,
+      Question/binary>>.
 deserialize(B) ->
     HEI = constants:height_bits(),
     Pad = constants:active_oracles_padding(),
-    HS = constants:hash_size(),
+    HS = constants:hash_size()*8,
     KL = constants:key_length(),
-    <<ID:KL, Q:HS, A:HEI, 0:Pad>> = B,
-    #active{id = ID, question = Q, starts = A}.
+    <<ID:KL, A:HEI, _:Pad, Q:HS>> = B,
+    #active{id = ID, question = <<Q:HS>>, starts = A}.
 
 write(Oracle, Root) ->
     V = serialize(Oracle),
@@ -56,9 +65,10 @@ root_hash(Root) ->
 	       
     
 test() ->
-    X = new(1, 2),
+    Root = 0,
+    X = new(testnet_hasher:doit(1), 2, Root),
     X = deserialize(serialize(X)),
-    NewLoc = write(0, X),
+    NewLoc = write(X, Root),
     {_, X, _} = get(X#active.id, NewLoc),
     success.
     

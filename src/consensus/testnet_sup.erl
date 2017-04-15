@@ -20,17 +20,22 @@ stop() ->
     halt().
 %exit(keys, kill).
 %supervisor:terminate_child(testnet_sup, keys).
+tree_child(Id, KeySize, Size) ->
+    Amount = constants:trie_size(),
+    Sup = list_to_atom(atom_to_list(Id) ++ "_sup"),
+    {Sup, {trie_sup, start_link, [KeySize, Size, Id, Amount, 0, constants:hash_size(), hd]}, permanent, 5000, supervisor, [trie_sup]}.
 init([]) ->
     Amount = constants:trie_size(),
     KeyLength = constants:key_length(), 
     %FullLength = trie_hash:hash_depth()*2,
     HashSize = constants:hash_size(),
-    FullLength = HashSize*2,
+    FullLength = HashSize*8,
     Children = child_maker(?keys),
     Tries = [
-		{accounts_sup, {trie_sup, start_link, [KeyLength, constants:account_size(), accounts, Amount, 0, HashSize, hd]}, permanent, 5000, supervisor, [trie_sup]},
-		{channels_sup, {trie_sup, start_link, [KeyLength, constants:channel_size(), channels, Amount, 0, HashSize, hd]}, permanent, 5000, supervisor, [trie_sup]},
-		{existence_sup, {trie_sup, start_link, [FullLength, HashSize , existence, Amount, 0, HashSize, hd]}, permanent, 5000, supervisor, [trie_sup]} %24 is long enough to use the hash as the position to store.
+	     tree_child(accounts, KeyLength, constants:account_size()),
+	     tree_child(channels, KeyLength, constants:channel_size()),
+	     tree_child(existence, FullLength, HashSize),
+	     tree_child(active_oracles, KeyLength, constants:active_oracles_size())
 	    ],
     {ok, { {one_for_one, 50000, 1}, Tries ++ Children} }.
 

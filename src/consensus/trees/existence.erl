@@ -1,26 +1,19 @@
 -module(existence).
--export([get/2,write/3, test/0]).
+-export([get/2,write/2,new/1, test/0]).
 %for accessing the proof of existence tree
--record(exist, {address, hash}).
+-record(exist, {hash}).
 
+new(Hash) ->
+    #exist{hash = Hash}.
 serialize(E) ->
-    AB = constants:acc_bits(),
     HS = constants:hash_size(),
-    Pad = constants:existence_pad(),
-    Address = E#exist.address,
     Hash = E#exist.hash,
-    AB = size(Address),
     HS = size(Hash),
-    <<Address/binary,
-      Hash/binary,
-      0:Pad>>.
+    Hash.
 deserialize(B) ->
-    AB = constants:acc_bits(),
-    HS = constants:hash_size(),
-    Pad = constants:existence_pad(),
-    <<Add:AB, Hash:HS, _:Pad>> = B,
-    #exist{address = <<Add:AB>>,
-	   hash = <<Hash:HS>>}.
+    HS = constants:hash_size()*8,
+    <<Hash:HS>> = B,
+    #exist{hash = <<Hash:HS>>}.
 
 get(Hash, Tree) ->
     true = is_binary(Hash),
@@ -33,7 +26,7 @@ get(Hash, Tree) ->
 		deserialize(Y)
 	end,
     {X, V, Proof}.
-write(N, E, Tree) ->
+write(E, Tree) ->
     Hash = E#exist.hash,
     Key = hash2int(Hash),
     X = serialize(E),
@@ -50,11 +43,13 @@ hash2int(<<X, Y/binary>>, N) ->
 
 
 test() ->
-    C = testnet_hasher:doit(2),
-    {_, empty, _} = get(C, 0),
-    Key = 1,
-    NewLoc = write(Key, C, 0),
-    NewLoc2 = write(Key, testnet_hasher:doit(4), NewLoc),
-    {_, Key, _} = get(C, NewLoc2),
-    {_, empty, _} = get(C, 0),
+    Hash = testnet_hasher:doit(2),
+    C = new(Hash),
+    %C = testnet_hasher:doit(2),
+    {_, empty, _} = get(Hash, 0),
+    NewLoc = write(C, 0),
+    C2 = new(testnet_hasher:doit(4)),
+    NewLoc2 = write(C2, NewLoc),
+    {_, C, _} = get(Hash, NewLoc2),
+    {_, empty, _} = get(Hash, 0),
     success.

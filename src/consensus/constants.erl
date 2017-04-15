@@ -100,16 +100,22 @@ channel_delay_bits() -> 32. %2^this is the maximum amount of blocks you could ha
 	     (balance_bits()*4) + channel_nonce_bits() + 
 	     (height_bits()*2) + 
 	     channel_entropy() + channel_delay_bits())).
+-define(ActiveOraclesSize,
+	(height_bits() + (hash_size()*8) + key_length())).
 		       
 account_padding() ->    
     8 - (?AccountSizeWithoutPadding rem 8).
 channel_padding() ->
     8 - (?ChannelSizeWithoutPadding rem 8).
+active_oracles_padding() ->
+    8 - (?ActiveOraclesSize rem 8).
 account_size() ->    
     (?AccountSizeWithoutPadding + account_padding()) div 8.
 channel_size() ->    
     (?ChannelSizeWithoutPadding + channel_padding()) div 8.
 existence_size() -> acc_bits().%hash_length*8
+active_oracles_size() ->
+    (?ActiveOraclesSize + active_oracles_padding()) div 8.
 
 channel_rent() -> account_rent().
 account_rent() -> round(math:pow(2, 13)).

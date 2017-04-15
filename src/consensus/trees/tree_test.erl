@@ -3,8 +3,8 @@
 
 test() ->
     S = success,
-    S = accounts:test(),
-    S = channels:test(),
+    S = account:test(),
+    S = channel:test(),
     S = existence:test(),
     S = active_oracles:test(),
     S.

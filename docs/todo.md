@@ -92,3 +92,4 @@ each tx with a fee needs a to reference a recent hash. Everyone needs to be ince
 We need to reward the miner with the transaction fees, to incentivize him to include them. block:absorb_txs
 
 
+Make sure that if something was garbage collected from a merkel tree, and we try accessing the thing, it gives a different message than trying to access something that doesn't exist.
