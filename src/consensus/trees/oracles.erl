@@ -1,23 +1,27 @@
 -module(oracles).
--export([new/5,write/3,get/2,id/1,result/1,
-	 question/1,starts/1,
-	 root_hash/1, test/0]).
+-export([new/4,write/3,get/2,id/1,result/1,
+	 question/1,starts/1,root_hash/1, 
+	 type/1, test/0]).
 -define(name, oracles).
--record(oracle, {id, result, question, starts, orders}).
+-record(oracle, {id, result, question, starts, orders, 
+		 type, pointer}).
 %we need to store a pointer to the orders tree in the meta data.
 
 id(X) -> X#oracle.id.
 result(X) -> X#oracle.result.
 question(X) -> X#oracle.question.
 starts(X) -> X#oracle.starts.
-new(ID, Result, Question, Starts, OrdersTree) ->
-    %Orders = orders:root_hash(OrdersTree),
-    Orders = OrdersTree,
+type(X) -> X#oracle.type.
+new(ID, Result, Question, Starts) ->
+    Orders = orders:empty_book(),
+    %Orders = OrdersTree,
     #oracle{id = ID,
 	    result = Result,
 	    question = Question,
 	    starts = Starts,
-	    orders = Orders
+	    orders = Orders,
+	    type = 0,
+	    pointer = 0
 	   }.
 root_hash(Root) ->
     trie:root_hash(?name, Root).
@@ -68,7 +72,7 @@ get(ID, Root) ->
 
 test() ->
     Root = 0,
-    X = new(1,2, testnet_hasher:doit(1), 2, testnet_hasher:doit(2)),
+    X = new(1,2, testnet_hasher:doit(1), 2),
     X = deserialize(serialize(X)),
     Meta = 0,
     NewLoc = write(X, Root, Meta),

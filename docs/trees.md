@@ -1,7 +1,7 @@
 There are 8 merkel trees.
 
-* active oracles+
-* oracle results+
+* oracles+
+* orders
 * channels+
 * accounts+
 * oracle bets
@@ -11,17 +11,17 @@ There are 8 merkel trees.
 
 (The ones with +'s are included in the generation of the state-hash that is recorded on the block's header)
 
-=== active oracles
+=== oracles
 
 These are the oracles that exist right now. They are stored by integer oracle id. Oracles never reuse the same id.
-This data is available to the VM.
 The hash of the text of the question is stored.
-
-=== oracle results
-
 These are the results of oracles that have existed. They are stored by id.
 This data is available to the VM.
-The result is stored in 1 byte. Either it is 0 for false, 1 for true, or 2 if the questions was bad.
+The result is stored in 1 byte. Either it is 0 for false, 1 for true, or 2 if the questions was bad, or a 4 if the question hasn't been answered yet.
+
+=== Orders
+
+Every oracle has an order book. The order book is a linked list of orders. Each order has an amount, and the id of the owner.
 
 === channels
 

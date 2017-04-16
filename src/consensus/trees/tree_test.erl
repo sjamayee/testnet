@@ -10,5 +10,6 @@ test() ->
     S = burn:test(),
     S = oracle_bets:test(),
     S = shares:test(),
+    S = orders:test(),
     S.
     

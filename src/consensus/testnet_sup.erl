@@ -37,9 +37,8 @@ init([]) ->
 	     tree_child(accounts, KeyLength, constants:account_size()),
 	     tree_child(channels, KeyLength, constants:channel_size()),
 	     tree_child(existence, FullLength, HashSize),
-	     %tree_child(active_oracles, KeyLength, constants:active_oracles_size()),
-	     %tree_child(oracle_results, KeyLength, (constants:key_length() div 8) + 1),
 	     tree_child(oracles, KeyLength, ((constants:key_length() div 8) + 1 + (constants:height_bits() div 8) + (2*constants:hash_size()))),% (constants:key_length() div 8)),
+	     tree_child(orders, KeyLength, ((constants:key_length() + (constants:orders_bits()*2) + constants:balance_bits()) div 8)),
 	     tree_child(burn, FullLength, (constants:balance_bits() div 8) + constants:hash_size()),
 	     tree_child(oracle_bets, KeyLength, (constants:key_length() + (constants:balance_bits() div 8))),
 	     tree_child(shares, KeyLength, (constants:key_length() + 1 + (constants:balance_bits() div 8)))

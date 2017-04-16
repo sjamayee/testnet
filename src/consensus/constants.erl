@@ -92,7 +92,7 @@ account_nonce_bits() -> 20.%maximum number of times you can update an account's 
 channel_nonce_bits() -> 30.%maximum number of times you can update a channel's state is 2^this.
 channel_rent_bits() -> 8.
 channel_delay_bits() -> 32. %2^this is the maximum amount of blocks you could have to channel_slash if your channel partner tries to cheat.
-		       
+orders_bits() -> 32.
 -define(AccountSizeWithoutPadding, 
 	(balance_bits() + height_bits() + account_nonce_bits() + acc_bits() + key_length())).
 -define(ChannelSizeWithoutPadding, 

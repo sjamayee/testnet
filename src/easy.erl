@@ -5,8 +5,11 @@
 
 sync() ->
     spawn(fun() -> sync3() end).
+height() ->    
+    block:height(block:read(top:doit())).
+
 sync3() ->
-    Height = block:height(block:read(top:doit())),
+    Height = height(),
     download_blocks:sync_all(peers:all(), Height),
     sync2(Height, 600).
 sync2(_Height, 0) -> 
