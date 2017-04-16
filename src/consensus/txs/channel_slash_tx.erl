@@ -50,12 +50,12 @@ doit(Tx, Channels, Accounts, NewHeight) ->
     NewChannel = channel:update(From, CID, Channels, NewCNonce, 0, 0, Amount, spk:delay(SPK), NewHeight), 
     NewChannels = channel:write(NewChannel, Channels),
 
-    Account1 = account:update(Acc1, Accounts, 0, none, NewHeight),
-    Account2 = account:update(Acc2, Accounts, 0, none, NewHeight),
+    %Account1 = account:update(Acc1, Accounts, 0, none, NewHeight),
+    %Account2 = account:update(Acc2, Accounts, 0, none, NewHeight),
     ID = Tx#cs.from,
-    Account3 = account:update(ID, Accounts, -Fee, Nonce, NewHeight),
-    Accounts2 = account:write(Accounts, Account1),
-    Accounts3 = account:write(Accounts2, Account3),
-    NewAccounts = account:write(Accounts3, Account2), 
+    Account = account:update(ID, Accounts, -Fee, Nonce, NewHeight),
+    %Accounts2 = account:write(Accounts, Account1),
+    %Accounts3 = account:write(Accounts2, Account3),
+    NewAccounts = account:write(Accounts, Account), 
    {NewChannels, NewAccounts}. 
 		      

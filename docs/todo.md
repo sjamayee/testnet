@@ -1,3 +1,8 @@
+active_oracles needs it's order book.
+maybe active_oracles and oracle_results should be the same tree.
+Then the same order book could be kept around for people to withdraw their money.
+
+
 javascript light wallets need to be able to do all the channel stuff that full nodes do.
 
 
