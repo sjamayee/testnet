@@ -237,12 +237,21 @@ check1(BP) ->
 
 %check2(BP) when is_record(BP, block_plus) ->
 %    check2(pow_block(BP));
+check_pow(BP) ->
+    Pow = BP#block_plus.pow,
+    A = pow:check_pow(Pow, constants:hash_size()),
+    BH = block_to_header(block(BP)), 
+    B = BH == pow:data(Pow),
+    A and B.
 check2(BP) ->
     %check that the time is later than the median of the last 100 blocks.
 
+    io:fwrite(packer:pack(BP)),
+    io:fwrite("check2, \n"),
     %check2 assumes that the parent is in the database already.
-    PowBlock = pow_block(BP),
-    true = pow:check_pow(PowBlock, constants:hash_size()),
+    true = check_pow(BP),
+    %PowBlock = pow_block(BP),
+    %true = pow:check_pow(PowBlock, constants:hash_size()),
     Block = block(BP),
     true = Block#block.magic == constants:magic(),
     Difficulty = Block#block.difficulty,
@@ -343,6 +352,7 @@ test() ->
     io:fwrite(packer:pack(Block)),
     io:fwrite("top 2, \n"),
     MBlock = mine(Block, 100000000),
+    io:fwrite(packer:pack(MBlock)),
     io:fwrite("top 3, \n"),
     check2(MBlock),
     success.

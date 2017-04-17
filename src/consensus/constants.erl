@@ -88,8 +88,8 @@ balance_bits() -> 48.%total number of coins is 2^(balance_bits()).
 half_bal() -> round(math:pow(2, balance_bits()-1)).
 acc_bits() -> hash_size()*8.%total number of accounts is 2^(acc_bits()) 800 billion.
 height_bits() -> 32. %maximum number of blocks is 2^this
-account_nonce_bits() -> 20.%maximum number of times you can update an account's state is 2^this.
-channel_nonce_bits() -> 30.%maximum number of times you can update a channel's state is 2^this.
+account_nonce_bits() -> 24.%maximum number of times you can update an account's state is 2^this.
+channel_nonce_bits() -> 32.%maximum number of times you can update a channel's state is 2^this.
 channel_rent_bits() -> 8.
 channel_delay_bits() -> 32. %2^this is the maximum amount of blocks you could have to channel_slash if your channel partner tries to cheat.
 orders_bits() -> 32.
@@ -110,7 +110,7 @@ channel_padding() ->
 active_oracles_padding() ->
     8 - (?ActiveOraclesSize rem 8).
 account_size() ->    
-    (?AccountSizeWithoutPadding + account_padding()) div 8.
+    (?AccountSizeWithoutPadding) div 8.
 channel_size() ->    
     (?ChannelSizeWithoutPadding + channel_padding()) div 8.
 existence_size() -> acc_bits().%hash_length*8

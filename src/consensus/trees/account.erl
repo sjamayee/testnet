@@ -39,7 +39,6 @@ serialize(A) ->
     SizeAddr = size(Baddr),
     SizeAddr = constants:hash_size(),
     Nbits = constants:account_nonce_bits(),
-    AP = constants:account_padding(),
     KL = key_length(),
     ID = A#acc.id,
     true = (ID - 1) < math:pow(2, KL),
@@ -47,8 +46,7 @@ serialize(A) ->
 	    (A#acc.nonce):(Nbits), 
 	    (A#acc.height):HEI,
 	    ID:KL,
-	    Baddr/binary,
-	    0:AP>>,
+	    Baddr/binary>>,
     Size = size(Out),
     Size = constants:account_size(),
     Out.
@@ -58,14 +56,12 @@ deserialize(A) ->
     HEI = constants:height_bits(),
     HD = constants:hash_size()*8,
     Nbits = constants:account_nonce_bits(),
-    AP = constants:account_padding(),
     KL = constants:key_length(),
     <<B1:BAL,
       B2:Nbits,
       B4:HEI,
       B5:KL,
-      B6:HD,
-      _:AP>> = A,
+      B6:HD>> = A,
     #acc{balance = B1, nonce = B2, height = B4, id = B5, addr = testnet_sign:binary2address(<<B6:HD>>)}.
     
 write(Root, Account) ->%These are backwards.
