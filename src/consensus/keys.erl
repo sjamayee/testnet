@@ -11,6 +11,31 @@
 %-define(LOC, "keys.db").
 -define(LOC, constants:keys()).
 -define(SANE(), <<"sanity">>).
+
+-spec start_link() -> 'ignore' | {'error',_} | {'ok',pid()}.
+-spec code_change(_,_,_) -> {'ok',_}.
+-spec terminate(_,_) -> 'ok'.
+-spec format_status(_,[any(),...]) -> [{[],[{_,_},...]},...].
+-spec init('ok') -> {'ok',#f{sanity::[]}}.
+-spec store(_,_,_,_) -> #f{}.
+-spec handle_call('id' | 'pubkey' | 'status' | {'raw_sign',_} | {'ss',_} | {'sign',_,_},_,_) -> {'reply',_,_}.
+-spec handle_cast(_,_) -> {'noreply',_}.
+-spec handle_info(_,_) -> {'noreply',_}.
+-spec pubkey() -> any().
+-spec address() -> any().
+-spec sign(_,_) -> any().
+-spec raw_sign(_) -> any().
+-spec load(_,_,_) -> 'ok'.
+-spec unlock(_) -> 'ok'.
+-spec lock() -> 'ok'.
+-spec status() -> any().
+-spec change_password(_,_) -> 'ok'.
+-spec new(_) -> 'ok'.
+-spec shared_secret(_) -> any().
+-spec id() -> any().
+-spec update_id(_) -> 'ok'.
+-spec test() -> 'success'.
+
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, ok, []).
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
 terminate(_, _) -> io:fwrite("keys died"), ok.
