@@ -1,6 +1,7 @@
 -module(dice).
 -export([make_ss/2, resolve_ss/3]).
 
+-spec make_ss({'spk',_,_,_,_,_,_,_,_,_,_},binary()) -> any().
 make_ss(SPK, Secret) ->
     Acc1 = spk:acc1(SPK),
     Acc2 = spk:acc2(SPK),
@@ -13,6 +14,7 @@ make_ss(SPK, Secret) ->
     S = size(Secret),
     compiler_chalang:doit("binary " ++ integer_to_list(S) ++ " " ++ binary_to_list(base64:encode(Secret)) ++ " int " ++ integer_to_list(N) ++ " ").
 
+-spec resolve_ss({'spk',_,_,_,_,_,_,_,_,_,_},_,_) -> any().
 resolve_ss(SPK, Secret, TheirSecret) ->
     Acc1 = spk:acc1(SPK),
     Acc2 = spk:acc2(SPK),

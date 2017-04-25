@@ -4,31 +4,47 @@
 %-define(InitialCoins, round(math:pow(2, 48)) - 1).
 %2^74 bits is 25 bitcoin =~ $10,000
 %2^64 bits is $10
+-spec token_decimals() -> 100000000.
 token_decimals() -> 100000000.
+-spec default_port() -> 8040.
 default_port() -> 8040.
+-spec key_length() -> 11.
 key_length() ->
     11. %so at most, we could store 16^11 =~ 17.6 trillion accounts and channels.
+-spec trie_size() -> 50000.
 trie_size() ->
     50000. %we can adjust this many accounts and channels per block.
 -define(InitialCoins, round(math:pow(2, 41)) - 1).
+-spec initial_coins() -> integer().
 initial_coins() -> ?InitialCoins.
+-spec block_reward() -> integer().
 block_reward() -> round(math:pow(2, 29)) - 1.
+-spec initial_difficulty() -> 6452.
 initial_difficulty() -> %1*256.%for testing purposes only
 6452.
 
+-spec hash_size() -> 12.
 hash_size() -> 12.
 
+-spec finality() -> 26.
 finality() -> 26.%/docs/security.py explains why.
+-spec address_entropy() -> 96.
 address_entropy() -> 96.
 %master_pub() -> <<"QkF4eUUvV2htL1NyMG5PTmJjN2pjaXlBZjhvNHZSZXhOc0ovaVZweVRpMmxTd0lMb0ZJTm1JUjNVdDNpMGRTaEIrd1FzNnA1QStRbmdZeStmTGY4ZzRvPQ==">>.
+-spec master_pub() -> <<_:704>>.
 master_pub() -> <<"BMs9FJOY3/h4Ip+lah0Rc4lZDEBbV3wHDZXtqUsWS1kz88bnBr18Q52HnuzdS7IzRuQCU1HVp/AWOnQM6LVcWWw=">>.
+-spec master_address() -> binary().
 master_address() ->
     testnet_sign:pubkey2address(master_pub()).
+-spec max_size() -> 2000000000.
 max_size() -> 2000000000.%should be 2 gigabytes, does not include old blocks.
+-spec gas_limit() -> 1000000.
 gas_limit() -> 1000000.
 %200,000,000 is enough to find the first 10001 prime numbers.
+-spec backup() -> {'f',_,_}.
 backup() -> fractions:new(19, 20).
 %-define(MBS, max_size() div max_reveal() div 10).%use about 10% of size for blocks.
+-spec max_block_size() -> 200000.
 max_block_size() -> 200000.%2*26 = 52 megabytes of ram to hold blocks.
 %this is only a limit to the size of the transactions.
 %the other block parts are also limited. Height must be an integer one greater than the previous.
@@ -46,51 +62,77 @@ max_block_size() -> 200000.%2*26 = 52 megabytes of ram to hold blocks.
 %-define(ConsensusBytePrice, initial_coins() div max_size()).%instead we should have a maximum number of bytes per block, and garbage collect old blocks.
 %$consensus_byte_price() -> ?ConsensusBytePrice.
 -define(MaxAddress, max_size() div 5 div 85).%use about 20% of space to store addresses. Each one is 85 bytes
+-spec max_address() -> 4705882.
 max_address() -> ?MaxAddress.
 -define(MaxChannel, max_size() * 3 div 10 div 30).%use about 30% of space to store channels. Each one is 30 bytes
+-spec max_channel() -> 20000000.
 max_channel() -> ?MaxChannel.
 -define(MinChannel, constants:initial_coins() div constants:max_channel()).%use about 30% of space to store channels. Each one is 30 bytes
 %this constant is also used to determine the minimum amount of money we can put into a channel at a time.
+-spec create_channel_fee() -> 0.
 create_channel_fee() -> 0.%consensus_byte_price() * 30.
+-spec delete_channel_reward() -> 0.
 delete_channel_reward() -> 0.
 %decided to charge for accounts based on how long it is open, instead of flat fee.
+-spec create_account_fee() -> 0.
 create_account_fee() -> 0.%consensus_byte_price() * 85.
+-spec delete_account_reward() -> 0.
 delete_account_reward() -> 0.%create_account_fee() * 19 div 20. % 95% refund.
+-spec security_ratio() -> {'f',_,_}.
 security_ratio() -> fractions:new(3, 2).
 %At most, a channel can contain 1/4000th of the money.
+-spec initial_channels() -> 1.
 initial_channels() -> %Around 10000 channels.
     1.
     %MVB = minimum_validators_per_block(),
     %D = fractions:divide(security_ratio(), security_bonds_per_winner()),
     %fractions:multiply_int(D, 4) div MVB.
 -define(AccountFee, fractions:new(1, max_address() * finality() * 10)).%so if all accounts are full, it takes 10 finalities until most of them start losing so much money that their accounts open up. 
+-spec account_fee() -> {'f',_,_}.
 account_fee() -> ?AccountFee. 
 %-define(DelegationFee, fractions:new(finality() * 1000 - 1, finality() * 1000)).%so it would take about 15,000 blocks to lose 1/2 your money. So you have about 350,000 chances to be validator till you lose 1 your money. So you need at least initial_coins()/350000 in delegation to be able to profitably validate. Which means it supports up to 350000 validators at a time max.
 -define(DelegationFee, fractions:new(1, 1000 * finality())).
+-spec delegation_fee() -> {'f',_,_}.
 delegation_fee() -> ?DelegationFee.
 %delegation_reward() -> fractions:subtract(fractions:new(1, 1), ?DelegationFee).
+-spec block_creation_fee() -> 0.
 block_creation_fee() -> 0.
+-spec max_reveal() -> 260.
 max_reveal() -> finality()*10.
 %1/4000000
 %block_creation_fee() -> fractions:new(1, 20000).%Which implies finality only has to be 13 blocks long!!!
 %It is important that 1/3 of the block_creation_fee be less than 2/3 of the validator's bond.
 %-define(PBCFV, fractions:multiply_int(block_creation_fee(), initial_coins()) div 3).
 -define(BR, fractions:new(1, 1000)).%spending 1000 coins necessarily burns ~1.
+-spec burn_ratio() -> {'f',_,_}.
 burn_ratio() -> ?BR.
+-spec root() -> [47 | 97 | 100 | 116,...].
 root() -> "data/".
+-spec block_hashes() -> [1..255,...].
 block_hashes() -> root() ++ "block_hashes.db".
+-spec keys() -> [46 | 47 | 97 | 98 | 100 | 101 | 107 | 115 | 116 | 121,...].
 keys() -> root() ++ "keys.db".
+-spec top() -> [46 | 47 | 97 | 98 | 100 | 111 | 112 | 116,...].
 top() -> root() ++ "top.db".
+-spec channel_manager() -> [1..255,...].
 channel_manager() -> root() ++ "channel_manager.db".
+-spec word_size() -> 100000.
 word_size() -> 100000.
 
 
+-spec balance_bits() -> 48.
 balance_bits() -> 48.%total number of coins is 2^(balance_bits()).
+-spec acc_bits() -> 96.
 acc_bits() -> hash_size()*8.%total number of accounts is 2^(acc_bits()) 800 billion.
+-spec height_bits() -> 32.
 height_bits() -> 32. %maximum number of blocks is 2^this
+-spec account_nonce_bits() -> 20.
 account_nonce_bits() -> 20.%maximum number of times you can update an account's state is 2^this.
+-spec channel_nonce_bits() -> 30.
 channel_nonce_bits() -> 30.%maximum number of times you can update a channel's state is 2^this.
+-spec channel_rent_bits() -> 8.
 channel_rent_bits() -> 8.
+-spec channel_delay_bits() -> 24.
 channel_delay_bits() -> 24.
 		       
 -define(AccountSizeWithoutPadding, 
@@ -101,47 +143,66 @@ channel_delay_bits() -> 24.
 	     (balance_bits()*2) + channel_nonce_bits() + 
 	     (height_bits()*2) + channel_rent_bits() + 
 	     1 + 2 + channel_entropy() + channel_delay_bits())).
+-spec account_padding() -> 1.
 account_padding() ->    
     8 - (?AccountSizeWithoutPadding rem 8).
+-spec channel_padding() -> 4.
 channel_padding() ->
     8 - (?ChannelSizeWithoutPadding rem 8).
+-spec account_size() -> 26.
 account_size() ->    
     (?AccountSizeWithoutPadding + account_padding()) div 8.
+-spec channel_size() -> 56.
 channel_size() ->    
     (?ChannelSizeWithoutPadding + channel_padding()) div 8.
 
+-spec channel_rent() -> integer().
 channel_rent() -> account_rent().
+-spec account_rent() -> integer().
 account_rent() -> round(math:pow(2, 13)).
 %48 bits is max money, 42 bits is initial money.
 %if we had a billion accounts, we would want the blockchain to last at least 20 years. 
 %144*52*20
 
+-spec retarget_frequency() -> 2000.
 retarget_frequency() -> %how many blocks till we recalculate the difficulty
     %40000.
     2000.
+-spec block_time() -> 6000.
 block_time() -> 
     6000.
     %10.
+-spec time_units() -> 100.
 time_units() -> %1000 = 1 second, 100 = 0.1 seconds
    100. 
+-spec start_time() -> 14825749780.
 start_time() -> 14825749780.
     
+-spec channel_entropy() -> 16.
 channel_entropy() -> 16. %Channel contracts only work for a channel with the same 2 account addresses, and with the same channel_entropy that has this many bits.
 %this is like another channel nonce, but we only increment it if the channel gets closed and re-created.
 
+-spec fun_limit() -> 1000.
 fun_limit() -> 1000.
+-spec var_limit() -> 10000.
 var_limit() -> 10000.
 
+-spec peers() -> [].
 peers() ->
     [].%[{IP, Port}| ...]
+-spec comment_limit() -> 140.
 comment_limit() -> %When a miner mines a block, they can set this many bytes to whatever they want.
     140.
+-spec magic() -> 1.
 magic() -> 1.
+-spec server_ip() -> {46,101,103,165}.
 server_ip() -> {46,101,103,165}.
+-spec server_port() -> 8080.
 server_port() -> 8080.
     
     
 
+-spec test() -> 'success'.
 test() ->
     success.
 

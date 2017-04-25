@@ -1,5 +1,6 @@
 -module(tester).
 -export([test/0]).
+-spec test() -> 'success' | [1..255,...].
 test() ->
     %this tests modules individually. To test all of them together, use block_tree:test() which adds some test blocks to the blocktree.
     %you need to run clean.sh to empty out the databases before running this test. Make sure you don't download anything from peers before running this test.
@@ -9,6 +10,7 @@ test() ->
 	_ -> "you need to unlock with keys:unlock(""password"") first"
     end.
 
+-spec test1() -> 'success'.
 test1() ->
     S = success,
     io:fwrite("constants test\n"),

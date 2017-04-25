@@ -15,35 +15,45 @@
 -record(block_plus, {block, accounts, channels, accumulative_difficulty = 0, prev_hashes = {}}).%The accounts and channels in this structure only matter for the local node. they are pointers to the locations in memory that are the root locations of the account and channel tries on this node.
 %prev_hash is the hash of the previous block.
 %this gets wrapped in a signature and then wrapped in a pow.
+-spec hashes(#block_plus{}) -> any().
 hashes(BP) ->
     BP#block_plus.prev_hashes.
     
+-spec block(tuple()) -> any().
 block(P) when element(1, P) == pow ->
     pow:data(P);
 block(BP) when is_record(BP, block_plus) ->
     block(BP#block_plus.block);
 block(B) when is_record(B, block) -> B.
+-spec pow_block(tuple()) -> tuple().
 pow_block(B) when element(1, B) == pow -> B;
 pow_block(BP) when is_record(BP, block_plus) ->
     pow_block(BP#block_plus.block).
 
+-spec channels(#block_plus{}) -> any().
 channels(Block) ->
     Block#block_plus.channels.
+-spec channels_hash(#block_plus{} | #block{}) -> any().
 channels_hash(BP) when is_record(BP, block_plus) ->
     channels_hash(pow:data(BP#block_plus.block));
 channels_hash(Block) -> Block#block.channels.
+-spec accounts(#block_plus{}) -> any().
 accounts(BP) ->
     BP#block_plus.accounts.
+-spec accounts_hash(#block_plus{} | #block{}) -> any().
 accounts_hash(BP) when is_record(BP, block_plus) ->
     accounts_hash(pow:data(BP#block_plus.block));
 accounts_hash(Block) ->
     Block#block.accounts.
+-spec height(tuple()) -> any().
 height(X) ->
     B = block(X),
     B#block.height.
+-spec prev_hashes(binary()) -> tuple().
 prev_hashes(PH) ->
     H = height(read(PH)),
     prev_hashes([PH], H, 2).
+-spec prev_hashes([any(),...],number(),pos_integer()) -> tuple().
 prev_hashes([PH|Hashes], Height, N) ->
     NHeight = Height - N,
     if
@@ -54,17 +64,22 @@ prev_hashes([PH|Hashes], Height, N) ->
     end.
 
    
+-spec prev_hash(non_neg_integer(),tuple()) -> any().
 prev_hash(0, BP) ->
     prev_hash(BP);
 prev_hash(N, BP) ->%N=0 should be the same as prev_hash(BP)
     element(N, BP#block_plus.prev_hashes).
+-spec prev_hash(tuple()) -> any().
 prev_hash(X) -> 
     B = block(X),
     B#block.prev_hash.
+-spec hash(tuple()) -> any().
 hash(X) -> 
     testnet_hasher:doit(term_to_binary(block(X))).
+-spec time_now() -> integer().
 time_now() ->
     (os:system_time() div (1000000 * constants:time_units())) - constants:start_time().
+-spec genesis() -> #block_plus{block::{'pow',#block{height::0,prev_hash::0,txs::[],mines_block::1,time::0,difficulty::4080,comment::<<_:752>>,magic::1},4080,44358461744572027408730},channels::0,accumulative_difficulty::0,prev_hashes::{}}.
 genesis() ->
     %the pointer to an empty trie is 0.
     Address = constants:master_address(),
@@ -90,6 +105,7 @@ genesis() ->
 	     4080,44358461744572027408730},
     #block_plus{block = Block, channels = 0, accounts = Accounts}.
     
+-spec absorb_txs(#block_plus{},number() | {number(),_},_,[{'signed',tuple(),binary() | [any()],binary() | [any()],_,_,_}]) -> {_,_}.
 absorb_txs(PrevPlus, MinesBlock, Height, Txs) ->
     OldAccounts = PrevPlus#block_plus.accounts,
     NewMiner = 
@@ -107,6 +123,7 @@ absorb_txs(PrevPlus, MinesBlock, Height, Txs) ->
 	       NewAccounts,
 	       Height).
     
+-spec make(binary(),[{'signed',tuple(),binary() | [any()],binary() | [any()],_,_,_}],number() | {number(),_}) -> #block_plus{block::#block{height::number(),prev_hash::binary(),txs::[{_,_,_,_,_,_,_}],mines_block::number() | {number(),_},time::integer(),comment::<<>>,magic::1},accumulative_difficulty::number(),prev_hashes::tuple()}.
 make(PrevHash, Txs, ID) ->%ID is the user who gets rewarded for mining this block.
     ParentPlus = read(PrevHash),
     Parent = pow:data(ParentPlus#block_plus.block),
@@ -130,9 +147,11 @@ make(PrevHash, Txs, ID) ->%ID is the user who gets rewarded for mining this bloc
        accounts = NewAccounts,
        prev_hashes = prev_hashes(PrevHash)
       }.
+-spec next_acc(#block_plus{accumulative_difficulty::number()},_) -> number().
 next_acc(Parent, ND) ->
     Parent#block_plus.accumulative_difficulty + pow:sci2int(ND).
     %We need to reward the miner the sum of transaction fees.
+-spec mine(#block_plus{block::#block_plus{block::#block_plus{block::{_,_,_,_,_,_} | {_,_,_,_,_,_,_,_,_,_,_}} | #block{}} | #block{}} | #block{},_) -> any().
 mine(BP, Times) when is_record(BP, block_plus) ->
     Block = BP#block_plus.block,
     case mine(Block, Times) of
@@ -143,6 +162,7 @@ mine(Block, Times) ->
     Difficulty = Block#block.difficulty,
     pow:pow(Block, Difficulty, Times, constants:hash_size()).
 
+-spec next_difficulty(#block_plus{}) -> any().
 next_difficulty(ParentPlus) ->
     Parent = pow:data(ParentPlus#block_plus.block),
     Height = Parent#block.height + 1,
@@ -156,12 +176,14 @@ next_difficulty(ParentPlus) ->
 	X == 0 -> retarget(PrevHash, Parent#block.difficulty);
 	true ->  OldDiff
     end.
+-spec median([any()]) -> any().
 median(L) ->
     S = length(L),
     F = fun(A, B) -> A > B end,
     Sorted = lists:sort(F, L),
     lists:nth(S div 2, Sorted).
     
+-spec retarget(_,_) -> any().
 retarget(PrevHash, Difficulty) ->    
     F = constants:retarget_frequency() div 2,
     {Times1, Hash2000} = retarget2(PrevHash, F, []),
@@ -173,6 +195,7 @@ retarget(PrevHash, Difficulty) ->
     %io:fwrite([Ratio, Difficulty]),%10/2, 4096
     ND = pow:recalculate(Difficulty, constants:block_time(), max(1, T)),
     max(ND, constants:initial_difficulty()).
+-spec retarget2(_,char(),[any()]) -> {[any()],_}.
 retarget2(Hash, 0, L) -> {L, Hash};
 retarget2(Hash, N, L) -> 
     BP = read(Hash),
@@ -181,6 +204,7 @@ retarget2(Hash, N, L) ->
     H = B#block.prev_hash,
     retarget2(H, N-1, [T|L]).
    
+-spec check1(tuple()) -> {_,_}.
 check1(BP) -> 
     %check1 makes no assumption about the parent's existance.
     BH = hash(BP),
@@ -200,6 +224,7 @@ check1(BP) ->
 	    {BH, Block#block.prev_hash}
     end.
 
+-spec check2(tuple()) -> #block_plus{block::tuple(),accumulative_difficulty::number(),prev_hashes::tuple()}.
 check2(BP) when is_record(BP, block_plus) ->
     check2(pow_block(BP));
 check2(PowBlock) ->
@@ -237,10 +262,12 @@ check2(PowBlock) ->
     end,
     #block_plus{block = PowBlock, channels = CR, accounts = AR, accumulative_difficulty = next_acc(PrevPlus, Block#block.difficulty), prev_hashes = prev_hashes(hash(Prev))}.
 
+-spec binary_to_file(binary()) -> [1..255,...].
 binary_to_file(B) ->
     C = base58:binary_to_base58(B),
     H = C,
     "blocks/"++H++".db".
+-spec read(binary()) -> any().
 read(Hash) ->
     BF = binary_to_file(Hash),
     Z = db:read(BF),
@@ -249,15 +276,19 @@ read(Hash) ->
 	A -> binary_to_term(zlib:uncompress(A))
     end.
   
+-spec lg(pos_integer()) -> non_neg_integer().
 lg(X) ->
     true = X > 0,
     true = is_integer(X),
     lgh(X, 0).
+-spec lgh(integer(),non_neg_integer()) -> non_neg_integer().
 lgh(1, X) -> X;
 lgh(N, X) -> lgh(N div 2, X+1).
+-spec read_int(number()) -> tuple().
 read_int(N) ->%currently O(n), needs to be improved to O(lg(n))
     true = N >= 0,
     read_int(N, top:doit()).
+-spec read_int(number(),binary()) -> tuple().
 read_int(N, BH) ->
     Block = read(BH),
     M = height(Block),
@@ -275,6 +306,7 @@ read_int(N, BH) ->
     
 
 
+-spec test() -> 'success'.
 test() ->
     io:fwrite("top, \n"),
     block:read(top:doit()),
@@ -291,15 +323,18 @@ test() ->
     io:fwrite("top 3, \n"),
     check2(MBlock),
     success.
+-spec new_id(1) -> pos_integer().
 new_id(N) -> 
     {Accounts, _, _, _} = tx_pool:data(),
     new_id(N, Accounts).
+-spec new_id(pos_integer(),_) -> pos_integer().
 new_id(N, Accounts) ->
    case account:get(N, Accounts) of
        {_, empty, _} -> N;
        _ -> new_id(N+1, Accounts)
    end.
 	   
+-spec mine_test() -> none().
 mine_test() ->
     PH = top:doit(),
     {block_plus, Block, _, _, _} = make(PH, [], keys:id()),
@@ -310,6 +345,7 @@ mine_test() ->
 %mine_blocks(N) ->
 %    mine_blocks(N, 1000000).
    
+-spec mine_blocks(non_neg_integer(),_) -> 'success'.
 mine_blocks(0, _) -> success;
 mine_blocks(N, Times) -> 
     PH = top:doit(),
@@ -349,10 +385,12 @@ mine_blocks(N, Times) ->
     F(),
     mine_blocks(N-1, Times).
     
+-spec spawn_many(non_neg_integer(),fun(() -> 'false' | 'ok')) -> 'ok'.
 spawn_many(0, _) -> ok;
 spawn_many(N, F) -> 
     spawn(F),
     spawn_many(N-1, F).
+-spec guess_number_of_cpu_cores() -> integer().
 guess_number_of_cpu_cores() ->    
     X = erlang:system_info(logical_processors_available),
     if

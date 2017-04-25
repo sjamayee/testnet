@@ -4,10 +4,15 @@
 -export([doit/4, make/5, acc1/1, acc2/1, fee/1, amount/1]).
 -record(ctc, {aid1 = 0, aid2 = 0, fee = 0,
 	      nonce = 0, id = 0, amount = 0}).
+-spec amount(#ctc{}) -> any().
 amount(Tx) -> Tx#ctc.amount.
+-spec fee(#ctc{}) -> any().
 fee(Tx) -> Tx#ctc.fee.
+-spec acc1(#ctc{}) -> any().
 acc1(Tx) -> Tx#ctc.aid1.
+-spec acc2(#ctc{}) -> any().
 acc2(Tx) -> Tx#ctc.aid2.
+-spec make(_,_,_,_,_) -> {#ctc{nonce::number()},[any(),...]}.
 make(ID,Accounts,Channels,Amount,Fee) ->
     {_, C, CProof} = channel:get(ID, Channels),
     A1 = channel:acc1(C),
@@ -20,6 +25,7 @@ make(ID,Accounts,Channels,Amount,Fee) ->
 	     amount = Amount},
     {Tx, [CProof, Proof1, Proof2]}.
     
+-spec doit(#ctc{amount::number()},_,_,_) -> {_,_}.
 doit(Tx, Channels,Accounts,NewHeight) ->
     ID = Tx#ctc.id,
     {_, OldChannel, _} = channel:get(ID, Channels),

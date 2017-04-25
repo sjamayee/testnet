@@ -8,24 +8,40 @@
 -module(channel_block_tx).
 -export([doit/7, origin_tx/3, channel/7, channel_block/5, channel_block/6, cc_losses/1, close_channel/4, id/1, delay/1, nonce/1, make_signed_cb/4, reveal_union/4, slash_bet/1, make_bet/2, acc1/1, acc2/1, amount/1, bets/1, fast/1, expiration/1, nlock/1, fee/1, add_bet/4, bet_code/1, bet_amount/1, bet_to/1, update/3, is_cb/1, channel_block_from_channel/7, replace_bet/3, test/0]).
 -record(channel_block, {acc1 = 0, acc2 = 0, amount = 0, nonce = 0, bets = [], id = 0, fast = false, delay = 10, expiration = 0, nlock = 0, fee = 0}).
+-spec is_cb(_) -> boolean().
 is_cb(CB) -> is_record(CB, channel_block).
+-spec acc1(#channel_block{}) -> any().
 acc1(CB) -> CB#channel_block.acc1.
+-spec acc2(#channel_block{}) -> any().
 acc2(CB) -> CB#channel_block.acc2.
+-spec amount(#channel_block{}) -> any().
 amount(CB) -> CB#channel_block.amount.
+-spec bets(#channel_block{}) -> any().
 bets(Ch) -> Ch#channel_block.bets.
+-spec id(#channel_block{}) -> any().
 id(Ch) -> Ch#channel_block.id.
+-spec fast(#channel_block{}) -> any().
 fast(Ch) -> Ch#channel_block.fast.
+-spec expiration(#channel_block{}) -> any().
 expiration(Ch) -> Ch#channel_block.expiration.
+-spec nlock(#channel_block{}) -> any().
 nlock(Ch) -> Ch#channel_block.nlock.
+-spec fee(#channel_block{}) -> any().
 fee(Ch) -> Ch#channel_block.fee.
+-spec nonce(#channel_block{}) -> any().
 nonce(X) -> X#channel_block.nonce.
+-spec delay(#channel_block{}) -> any().
 delay(X) -> X#channel_block.delay.
 -record(signed_cb, {acc = 0, nonce = 0, channel_block = #channel_block{}, fee = 0}).
 -record(bet, {amount = 0, code = language:assemble([crash]), to = 1}).%code is like scriptpubkey from bitcoin.
+-spec bet_code(#bet{}) -> any().
 bet_code(Bet) -> Bet#bet.code.
+-spec bet_amount(#bet{}) -> any().
 bet_amount(Bet) -> Bet#bet.amount.
+-spec bet_to(#bet{}) -> any().
 bet_to(Bet) -> Bet#bet.to.
 -record(tc, {acc1 = 0, acc2 = 0, nonce = 0, bal1 = 0, bal2 = 0, consensus_flag = false, fee = 0, id = -1, increment = 0}).
+-spec add_bet(#channel_block{amount::number(),nonce::number(),bets::[#bet{amount::number()}]},integer(),_,number()) -> #channel_block{amount::number(),nonce::number()}.
 add_bet(CB, Amount, Code, To) ->
     0 = Amount rem 2,
     A = abs(Amount div 2),
@@ -33,11 +49,14 @@ add_bet(CB, Amount, Code, To) ->
     NewBets = [#bet{amount = abs(A), code = Code, to = To}|Bets],
     replace_bet(CB, NewBets, To * A).
 %replace_bet(CB, NewBets, (To * Amount) div 2).
+-spec replace_bet(#channel_block{amount::number(),nonce::number(),bets::[#bet{amount::number()}]},_,number()) -> #channel_block{amount::number(),nonce::number()}.
 replace_bet(CB, NewBets, Amount) ->
     update(CB, Amount, 0, NewBets, CB#channel_block.fast, CB#channel_block.delay, CB#channel_block.expiration, CB#channel_block.nlock, CB#channel_block.fee).
     
+-spec update(#channel_block{amount::number(),nonce::number(),bets::[#bet{amount::number()}]},number(),number()) -> #channel_block{amount::number(),nonce::number()}.
 update(CB, Amount, Nonce) ->
     update(CB, Amount, Nonce, CB#channel_block.bets, CB#channel_block.fast, CB#channel_block.delay, CB#channel_block.expiration, CB#channel_block.nlock, CB#channel_block.fee).
+-spec update(#channel_block{amount::number(),nonce::number(),bets::[#bet{amount::number()}]},number(),number(),_,_,_,_,_,_) -> #channel_block{amount::number(),nonce::number()}.
 update(CB, Amount, Nonce, NewBets, Fast, Delay, Expiration, Nlock, Fee) -> 
     BetAmount = bets_sum(CB#channel_block.bets),
     Channel = block_tree:channel(CB#channel_block.id),
@@ -54,17 +73,22 @@ update(CB, Amount, Nonce, NewBets, Fast, Delay, Expiration, Nlock, Fee) ->
     A = CB#channel_block.amount + Amount,
 
     #channel_block{acc1 = CB#channel_block.acc1, acc2 = CB#channel_block.acc2, amount = A, nonce = CB#channel_block.nonce + Nonce, bets = NewBets, id = CB#channel_block.id, fast = Fast, delay = Delay, expiration = Expiration, nlock = Nlock, fee = Fee}.
+-spec make_bet(_,_) -> #bet{to::1}.
 make_bet(Amount, Code) ->
     #bet{amount = Amount, code = Code}.
+-spec make_signed_cb(_,_,_,_) -> any().
 make_signed_cb(Acc, CB, Fee, Evidence) ->
     A = block_tree:account(Acc),
     Nonce = accounts:nonce(A),
     NewCB = #signed_cb{acc = Acc, nonce = Nonce + 1, channel_block = CB, fee = Fee},
     testnet_sign:set_revealed(testnet_sign:empty(NewCB), Evidence).
+-spec close_channel(_,_,_,_) -> #channel_block{bets::[],fast::'true',delay::10,expiration::0,nlock::0}.
 close_channel(Id, Amount, Nonce, Fee) ->
     Channel = block_tree:channel(Id),
     #channel_block{acc1 = channels:acc1(Channel), acc2 = channels:acc2(Channel), amount = Amount, nonce = Nonce, id = Id, fast = true, fee = Fee}.
+-spec cc_losses([any()]) -> number().
 cc_losses(Txs) -> cc_losses(Txs, 0).%filter out channel_block, channel_slash, and channel_close type txs. add up the amount of money in each such channel. 
+-spec cc_losses([any()],number()) -> number().
 cc_losses([], X) -> X;
 cc_losses([SignedTx|T], X) -> 
     Tx = testnet_sign:data(SignedTx),
@@ -86,6 +110,7 @@ cc_losses([SignedTx|T], X) ->
 	_ -> cc_losses(T, X)
     end.
     
+-spec creator(maybe_improper_list(),_) -> any().
 creator([], _) -> testnet_sign:empty(#tc{});
 creator([SignedTx|T], Id) ->
     Tx = testnet_sign:data(SignedTx),
@@ -104,21 +129,28 @@ creator([SignedTx|T], Id) ->
 	true ->
 	    creator(T, Id)
     end.
+-spec bets_sum([#bet{amount::number()}]) -> number().
 bets_sum(X) -> bets_sum(X, 0).
+-spec bets_sum([#bet{amount::number()}],number()) -> number().
 bets_sum([], X) -> X;
 bets_sum([Tx|Txs], X) -> bets_sum(Txs, X+abs(Tx#bet.amount)).
+-spec channel_block(_,_,_,_,_) -> #channel_block{fast::'false',expiration::0,nlock::0}.
 channel_block(Id, Amount, Nonce, Delay, Fee) ->
 channel_block(Id, Amount, Nonce, Delay, Fee, []).
+-spec channel_block(_,_,_,_,_,_) -> #channel_block{fast::'false',expiration::0,nlock::0}.
 channel_block(Id, Amount, Nonce, Delay, Fee, Bets) ->
     Channel = block_tree:channel(Id),
     channel_block_from_channel(Id, Channel, Amount, Nonce, Delay, Fee, Bets).
+-spec channel_block_from_channel(_,_,_,_,_,_,_) -> #channel_block{fast::'false',expiration::0,nlock::0}.
 channel_block_from_channel(Id, Channel, Amount, Nonce, Delay, Fee, Bets) ->
     true = Delay < constants:max_reveal(),
     #channel_block{acc1 = channels:acc1(Channel), acc2 = channels:acc2(Channel), amount = Amount, nonce = Nonce, id = Id, fast = false, delay = Delay, fee = Fee, bets=Bets}.
+-spec origin_tx(_,_,_) -> any().
 origin_tx(BlockNumber, ParentKey, ID) ->
     OriginBlock = block_tree:read_int(BlockNumber, ParentKey),
     OriginTxs = block_tree:txs(OriginBlock),
     creator(OriginTxs, ID).
+-spec doit(#signed_cb{fee::number()},_,dict:dict(_,_),dict:dict(_,_),number(),_,_) -> {dict:dict(_,_),dict:dict(_,_),number(),_}.
 doit(Tx, ParentKey, Channels, Accounts, TotalCoins, S, NewHeight) ->
     CB = testnet_sign:data(Tx#signed_cb.channel_block),
     true = CB#channel_block.fast,%If fast is false, then you have to use close_channel instead. 
@@ -130,6 +162,7 @@ doit(Tx, ParentKey, Channels, Accounts, TotalCoins, S, NewHeight) ->
     Nonce = Tx#signed_cb.nonce,
     channel(Tx#signed_cb.channel_block, ParentKey, Channels, NewAccounts, TotalCoins, S, NewHeight).
 
+-spec channel(_,_,dict:dict(_,_),dict:dict(_,_),number(),_,_) -> {dict:dict(_,_),dict:dict(_,_),number(),_}.
 channel(SignedCB, ParentKey, Channels, Accounts, TotalCoins, S, NewHeight) ->
     CB = testnet_sign:data(SignedCB),
     Acc1 = block_tree:account(CB#channel_block.acc1, ParentKey, Accounts),
@@ -173,8 +206,10 @@ channel(SignedCB, ParentKey, Channels, Accounts, TotalCoins, S, NewHeight) ->
     NewAccounts2 = dict:store(CB#channel_block.acc2, N2, NewAccounts1),
     {NewChannels, NewAccounts2, TotalCoins - Loss, S}.%remove money from totalcoins that was deleted in bets.
 
+-spec bet_results(_,[any()],number()) -> {number(),number(),number()}.
 bet_results(Bets, Revealed, BetAmount) -> 
     bet_results(Bets, Revealed, BetAmount, {0,0,0}).
+-spec bet_results(_,[any()],number(),{number(),number(),number()}) -> {number(),number(),number()}.
 bet_results([], [], _, X) -> X;
 bet_results(_, [], BetAmount, {Win1, Win2, Loss}) -> 
     {Win1, Win2, Loss+BetAmount - Win1 - Win2};
@@ -202,20 +237,26 @@ bet_results([B|Bets], [R|Revealed], BA, {Win1, Win2, Loss}) ->
 		  {Win1 + More2, Win2 + More1, Loss + D}
 	  end,
     bet_results(Bets, Revealed, BA, Out).
+-spec code(#channel_block{bets::[#bet{}]}) -> [any()].
 code(X) -> code(X#channel_block.bets, []).
+-spec code([#bet{}],[any()]) -> [any()].
 code([], Out) -> lists:reverse(Out);
 code([B|Bets], Out) -> code(Bets, [B#bet.code|Out]).
+-spec reveal_union(#channel_block{bets::[#bet{}]},[any()],#channel_block{bets::[#bet{}]},[any()]) -> [any()].
 reveal_union(CB1, Revealed1, CB2, Revealed2) ->
     BN1 = bet_nonces(code(CB1), Revealed1),
     BN2 = bet_nonces(code(CB2), Revealed2),
     union_helper(BN1, BN2, Revealed1, Revealed2).
+-spec union_helper([any()],[any()],[any()],[any()]) -> [any()].
 union_helper([],[],[],[]) -> [];
 union_helper([B1|BN1], [B2|BN2], [R1|RN1], [_|RN2]) when B1>B2->
     [R1|union_helper(BN1, BN2, RN1, RN2)];
 union_helper([_|BN1], [_|BN2], [_|RN1], [R2|RN2]) ->
     [R2|union_helper(BN1, BN2, RN1, RN2)].
 
+-spec bet_nonces([any()],[any()]) -> [any()].
 bet_nonces(Bets, Revealed) -> bet_nonces(Bets, Revealed, []).
+-spec bet_nonces([any()],[any()],[any()]) -> [any()].
 bet_nonces([], [], Out) -> Out;
 bet_nonces([_|Bets], [], Out) -> bet_nonces(Bets, [], [0|Out]);
 bet_nonces([_|Bets], [R|Reveal], Out) when not is_list(R) ->
@@ -228,19 +269,26 @@ bet_nonces([B|Bets], [R|Reveal], Out) ->
 %slash(CB) -> slash(CB#channel_block.bets, []).
 %slash([], Out) -> lists:reverse(Out);
 %slash([C|CB], Out) -> slash(CB, [slash_bet(C)|Out]).
+-spec slash_bet(#channel_block{bets::[]}) -> #channel_block{bets::[]}.
 slash_bet(B) -> %replace every 34 in the code with true. 
     Bets = B#channel_block.bets,
     NewBets = slash_codes(Bets),
     #channel_block{acc1 = B#channel_block.acc1, acc2 = B#channel_block.acc2, amount = B#channel_block.amount, nonce = B#channel_block.nonce, bets = NewBets, id = B#channel_block.id, fast = B#channel_block.fast, delay = B#channel_block.delay, expiration = B#channel_block.expiration, nlock = B#channel_block.nlock, fee = B#channel_block.fee}.
+-spec slash_codes([]) -> [].
 slash_codes(X) -> slash_codes(X, []).
+-spec slash_codes([],[]) -> [].
 slash_codes([], Out) -> lists:reverse(Out);
 slash_codes(X, Out) -> slash_codes([slash_code(X)|Out]).
+-spec slash_code([any()]) -> [any()].
 slash_code(X) -> slash_code(X, []).
+-spec slash_code([any()],[any()]) -> [any()].
 slash_code([], Out) -> lists:reverse(Out);
 slash_code([Word|X], Out) -> slash_code(X, [slash_word(Word)|Out]).
+-spec slash_word(_) -> any().
 slash_word(34) -> true;
 slash_word(X) -> X.
     
+-spec test() -> #channel_block{amount::number(),nonce::number()}.
 test() ->    
     CB = #channel_block{},
     update(CB, 100, 0).

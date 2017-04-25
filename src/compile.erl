@@ -1,6 +1,7 @@
 -module(compile).
 
 -export([doit/2]).
+-spec doit(atom() | binary() | [atom() | [any()] | char()],binary() | maybe_improper_list(binary() | maybe_improper_list(any(),binary() | []) | byte(),binary() | [])) -> any().
 doit(X, Y) when is_list(Y) ->
     doit(X, list_to_binary(Y));
 doit(F, Front) ->

@@ -3,6 +3,7 @@
 -record(timeout, {aid = 0, nonce = 0, fee = 0, cid = 0}).
 %If your partner is not helping you, this is how you start the process of closing the channel. 
 %You should only use the final channel-state, or else your partner can punish you for cheating.
+-spec make(_,_,_,_,_) -> {#timeout{nonce::number()},[any(),...]}.
 make(ID,Accounts,Channels,CID,Fee) ->
     {_, Acc, Proof} = account:get(ID, Accounts),
     {_, Channel, Proofc} = channel:get(CID, Channels),
@@ -18,6 +19,7 @@ make(ID,Accounts,Channels,CID,Fee) ->
 		  fee = Fee, cid = CID},
     {Tx, [Proof, Proof2, Proofc]}.
 
+-spec doit(#timeout{fee::number()},_,_,number()) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     From = Tx#timeout.aid,
     CID = Tx#timeout.cid,

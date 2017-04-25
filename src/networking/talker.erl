@@ -1,6 +1,8 @@
 -module(talker).
 -export([talk/3, local_talk/1]).
 
+-spec peer(binary() | tuple(),integer()) -> [any(),...].
+
 peer(IP, Port) ->
     %{ok, Address} = inet_parse:address(IP),
     L = size(IP),
@@ -11,14 +13,20 @@ peer(IP, Port) ->
 	end,
     "http://" ++ Z ++ ":" ++ integer_to_list(Port) ++ "/".
 
+-spec local_talk(_) -> any().
+
 local_talk(Msg) ->
     Peer = "http://127.0.0.1:3011/",
     talk(Msg, Peer).
 %talk(Msg) ->
 %    Peer = "http://127.0.0.1:3010/",
 %    talk(Msg, Peer).
+-spec talk(_,[any(),...]) -> any().
+
 talk(Msg, Peer) ->
     talk_helper(Msg, Peer, 5).
+-spec talk_helper(_,[any(),...],0 | 1 | 2 | 3 | 4 | 5) -> any().
+
 talk_helper(_, _, 0) -> {error, failed_connect};
 talk_helper(Msg, Peer, N) ->
     PM = packer:pack(Msg),
@@ -42,4 +50,6 @@ talk_helper(Msg, Peer, N) ->
 	    talk_helper(Msg, Peer, N-1)
 		
     end.
+-spec talk(_,binary() | tuple(),integer()) -> any().
+
 talk(Msg, IP, Port) -> talk(Msg, peer(IP, Port)).

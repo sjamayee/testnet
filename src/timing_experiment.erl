@@ -9,31 +9,37 @@
 -define(FullTuple, list_to_tuple(?List64 ++ ?List64)).
 %list_to_tuple(?List256 ++ ?List256 ++ ?List256 ++ ?List256)).
 
+-spec full_hashtable(dict:dict(_,_),byte()) -> dict:dict(_,_).
 full_hashtable(D, 0) -> D;
 full_hashtable(D, X) -> 
     full_hashtable(dict:store(X, X, D), X-1).
+-spec hashtable(_,pos_integer()) -> 'ok'.
 hashtable(_, 1) -> ok;
 hashtable(HT, Times) ->
     X = Times rem ?size,
     NHT = dict:store(X, X, HT),
     hashtable(NHT, Times - 1).
+-spec hashtable_read(_,pos_integer()) -> 'ok'.
 hashtable_read(_, 1) -> ok;
 hashtable_read(HT, Times) ->
     X = Times rem ?size,
     %X = 5,
     dict:fetch(X, HT),
     hashtable_read(HT, Times - 1).
+-spec tuple(_,pos_integer()) -> 'ok'.
 tuple(_, 1) -> ok;
 tuple(Tuple, Times) ->
     X = Times rem ?size,
     NT = setelement(X, Tuple, X),
     tuple(NT, Times - 1).
+-spec tuple_read(_,pos_integer()) -> 'ok'.
 tuple_read(_, 1) -> ok;
 tuple_read(Tuple, Times) ->
     %X = Times rem ?size,
     %X = 5,
     %element(X, Tuple),
     tuple_read(Tuple, Times - 1).
+-spec test() -> [{integer(),_},...].
 test() ->
     H = full_hashtable(dict:new(), ?size),
     [timer:tc(timing_experiment, hashtable, [H, ?size - 1]),

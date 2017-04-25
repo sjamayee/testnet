@@ -3,11 +3,17 @@
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2, pop/2,pop_hashes/1,cost/2,register/2,send/3,status/0,test/0,register_cost/0,internal_send/3]).
 -record(msg, {start, lasts, msg, size = 0, to}).
 -record(d, {db = dict:new(), accs = 0, msgs = 0}).
+-spec init('ok') -> {'ok',#d{db::dict:dict(_,_),accs::0,msgs::0}}.
 init(ok) -> {ok, #d{}}.
+-spec start_link() -> 'ignore' | {'error',_} | {'ok',pid()}.
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, ok, []).
+-spec code_change(_,_,_) -> {'ok',_}.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
+-spec terminate(_,_) -> 'ok'.
 terminate(_, _) -> io:format("died!"), ok.
+-spec handle_info(_,_) -> {'noreply',_}.
 handle_info(_, X) -> {noreply, X}.
+-spec handle_cast({'new',_} | {'send',_,binary() | tuple(),_},#d{db::dict:dict(_,_)}) -> {'noreply',#d{db::dict:dict(_,_)}}.
 handle_cast({new, Acc}, X) -> 
     B = case dict:find(Acc, X#d.db) of
             error ->
@@ -27,6 +33,7 @@ handle_cast({send, To, Message, Seconds}, X) ->
     NewD = dict:store(To,dict:store(hash:doit(Msg), Msg, A), DB),
     NewX = #d{db = NewD, accs = Accs, msgs = X#d.msgs + 1},
     {noreply, NewX}.
+-spec handle_call('status' | {'pop_hashes',_} | {'pop',_,_},_,#d{}) -> {'reply',_,#d{}}.
 handle_call({pop_hashes, Acc}, _From, X) -> 
     Out = case dict:find(Acc, X#d.db) of
 	      error -> <<"empty">>;
@@ -57,14 +64,17 @@ handle_call(status, _From, X) -> {reply, X#d.db, X}.
 %A = block_tree:account(To),
 %Pub = accounts:pub(A),
 %encryption:send_msg(nonce:server_get(To), Pub).
+-spec pop_hashes(_) -> any().
 pop_hashes(Account) ->
     gen_server:call(?MODULE, {pop_hashes, Account}).
+-spec pop(_,_) -> 'ok' | <<_:128>> | {'locked_payment',_} | {'ok',0} | {'unlock',_} | {'pop_response',binary() | tuple(),_}.
 pop(Account, Hashe) ->
     X = gen_server:call(?MODULE, {pop, Account, Hashe}),
     case X of 
 	empty -> <<"no more messages">>;
 	{ok, Y} -> pop3(Account, Y)
     end.
+-spec pop3(_,#msg{}) -> 'ok' | {'locked_payment',_} | {'ok',0} | {'unlock',_} | {'pop_response',binary() | tuple(),_}.
 pop3(From, M) ->
     S = M#msg.lasts,
     if
@@ -95,16 +105,22 @@ pop3(From, M) ->
 	true ->
 	    io:fwrite(M#msg.lasts)
     end.
+-spec cost(number(),number()) -> number().
 cost(MsgSize, Time) -> 10000 * MsgSize * Time. %time in seconds
 -define(REGISTER, 100000).
+-spec register_cost() -> 100000.
 register_cost() -> ?REGISTER.
+-spec status() -> any().
 status() -> gen_server:call(?MODULE, status).
+-spec register(_,_) -> 'ok'.
 register(Payment, Acc) ->
     ChId = hd(channel_manager:id(Acc)),
     channel_manager_feeder:recieve(ChId, ?REGISTER, Payment),
     gen_server:cast(?MODULE, {new, Acc}).
+-spec send(_,_,_) -> 'ok'.
 send(To, Msg, Seconds) ->
     gen_server:cast(?MODULE, {send, To, Msg, Seconds}).
+-spec internal_send(_,_,_) -> 'ok'.
 internal_send(To, Msg, Seconds) ->
     send(To, Msg, Seconds).
 %delete_account(Acc, Sig) ->
@@ -115,6 +131,7 @@ internal_send(To, Msg, Seconds) ->
 %    channel_manager:spend_acc(Acc, ?REGISTER div 10 * 9).
 
             
+-spec test() -> 'success'.
 test() ->            
     {Addr, Pub, Priv} = testnet_sign:hard_new_key(),
     %{Addr, Pub, Priv} = {<<"UrNC5nqd7uERs6m">>, <<"BIDUw/Dagrmh3R4akgRfCwH1/EIoCIAKrfMwPAKSoCn0h2iyjUb/lq8ZrngfARRlAdOsNSVp1gW0DQ8Xp+fz910=">>, <<"P1h6YBH65iQy/4lzvNhhPecYJrvoMoqeX+IR912bIjM=">>},

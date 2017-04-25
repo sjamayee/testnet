@@ -2,13 +2,16 @@
 -module(packer).
 -export([pack/1,unpack/1,test/0, untup/1, unpack_helper/1]).
 -define(KEY, -6).
+-spec untup(_) -> any().
 untup(X) when is_tuple(X) -> lists:map(fun(Z) ->untup(Z) end, tuple_to_list(X));
 untup(X) when is_list(X) -> [?KEY|lists:map(fun(Z)->untup(Z) end,X)];
 untup(X) when is_binary(X) -> base64:encode(X);
 %untup(X) when is_binary(X) -> X; %bad
 untup(X) -> X.
+-spec unpack(_) -> any().
 unpack(I) when is_integer(I) -> I;
 unpack(JSON) -> unpack_helper(jiffy:decode(JSON)).
+-spec unpack_helper(_) -> any().
 unpack_helper(J) when is_binary(J) -> base64:decode(J);
 %unpack_helper(J) when is_binary(J) -> J;%bad
 unpack_helper(J) when not is_list(J) -> J;
@@ -21,8 +24,10 @@ unpack_helper(J) ->
 	      is_integer(K) -> K	    
 	  end,
     list_to_tuple([Out|lists:map(fun(X) -> unpack_helper(X) end, tl(J))]).
+-spec pack(_) -> any().
 pack(X) -> jiffy:encode(untup(X)).
 -record(d, {a = "", b = "" }).
+-spec test() -> 'success'.
 test() -> 
     Record = #d{a=[1, 2, <<"abc">>, [], #d{}], b = <<1,2,3,200, 0:80000>> },
     %ABC = {unlock, 24001,1,[{signed,{channel_block,0,3,-9500,3,[],24001,false,259,0,0,0],"TUVZQ0lRQzlwVkxjQ0hReXhpWE0zOU43bVFOS1pTV01WS0MxMkNUYjUwZSs4MkRnd3dJaEFPZG1lWlp0VXdjUXU0UjQzazhRWkREd29tb1BuQ05TWlhDSEl0QU5PemRj",[-6],[-6]],0]],

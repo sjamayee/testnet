@@ -2,6 +2,7 @@
 -export([doit/4, make/6]).
 -record(cs, {from, nonce, fee = 0, 
 	     scriptpubkey, scriptsig}).
+-spec make(_,_,_,_,_,_) -> {#cs{nonce::number()},[any(),...]}.
 make(From, Fee, ScriptPubkey, ScriptSig, Accounts,Channels) ->
     SPK = testnet_sign:data(ScriptPubkey),
     CID = spk:cid(SPK),
@@ -20,6 +21,7 @@ make(From, Fee, ScriptPubkey, ScriptSig, Accounts,Channels) ->
 	      scriptsig = ScriptSig},
     {Tx, [Proof1, Proof2, Proofc]}.
 
+-spec doit(#cs{},_,_,_) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     From = Tx#cs.from,
     %CID = Tx#cs.cid,

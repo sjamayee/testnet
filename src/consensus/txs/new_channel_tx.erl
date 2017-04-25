@@ -5,9 +5,13 @@
 	     bal1 = 0, bal2 = 0, rent = 0, entropy = 0, 
 	     delay = 10, id = -1}).
 
+-spec acc1(#nc{}) -> any().
 acc1(X) -> X#nc.acc1.
+-spec acc2(#nc{}) -> any().
 acc2(X) -> X#nc.acc2.
+-spec id(#nc{}) -> any().
 id(X) -> X#nc.id.
+-spec good(#nc{bal1::number(),bal2::number()}) -> boolean().
 good(Tx) ->
     %make sure that the money is a fair balance of ours and theirs.
     Delay = Tx#nc.delay,
@@ -28,11 +32,15 @@ good(Tx) ->
     Frac = Top / (Bal1 + Bal2),
     MCR = free_constants:min_channel_ratio(),
     Frac < MCR.
+-spec cid(#nc{}) -> any().
 cid(Tx) -> Tx#nc.id.
+-spec entropy(#nc{}) -> any().
 entropy(Tx) -> Tx#nc.entropy.
+-spec spk(#nc{},_) -> {'spk',_,_,_,_,_,_,_,_,0,_}.
 spk(Tx, Delay) -> spk:new(Tx#nc.acc1, Tx#nc.acc2, Tx#nc.id,
 			  [], 0,0, Delay, 0, 
 			  Tx#nc.entropy).
+-spec make(_,_,_,_,_,_,_,_,_,_) -> {#nc{nonce::number()},[any(),...]}.
 make(ID,Accounts,Acc1,Acc2,Inc1,Inc2,Rent,Entropy,Delay, Fee) ->
     {_, A, Proof} = account:get(Acc1, Accounts),
     Nonce = account:nonce(A),
@@ -46,6 +54,7 @@ make(ID,Accounts,Acc1,Acc2,Inc1,Inc2,Rent,Entropy,Delay, Fee) ->
 	     },
     {Tx, [Proof, Proof2]}.
 				 
+-spec doit(#nc{bal1::number(),bal2::number()},_,_,_) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     ID = Tx#nc.id,
     {_, empty, _} = channel:get(ID, Channels),

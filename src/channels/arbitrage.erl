@@ -3,14 +3,21 @@
 -module(arbitrage).
 -behaviour(gen_server).
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2, delete/2,add/4,check_hash/1,agree/3,new/4,bet_find/2,check_loser/3,check_winner/3,test/0]).
+-spec init('ok') -> {'ok',dict:dict(_,_)}.
 init(ok) -> {ok, dict:new()}.
+-spec start_link() -> 'ignore' | {'error',_} | {'ok',pid()}.
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, ok, []).
+-spec code_change(_,_,_) -> {'ok',_}.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
+-spec terminate(_,_) -> 'ok'.
 terminate(_, _) -> io:format("died!"), ok.
+-spec handle_info(_,_) -> {'noreply',_}.
 handle_info(_, X) -> {noreply, X}.
+-spec remove({_,_,_},maybe_improper_list()) -> any().
 remove(X, [X|T]) -> T;
 remove(_, []) -> [];
 remove(X, [A|T]) -> [A|remove(X, T)].
+-spec handle_cast({'add',_,_,_,_} | {'del',_,_,_,_},dict:dict(_,_)) -> {'noreply',dict:dict(_,_)}.
 handle_cast({del, BH, ChIdLose, ChIdGain, Amount}, X) -> 
     Z = case dict:find(BH, X) of
 	    error -> X;
@@ -28,12 +35,14 @@ handle_cast({add, BH, ChIdLose, ChIdGain, Amount}, X) ->
 	end,
     Z = dict:store(BH, Y, X),
     {noreply, Z}.
+-spec handle_call({'check',_},_,dict:dict(_,_)) -> {'reply',_,dict:dict(_,_)}.
 handle_call({check, BH}, _From, X) -> 
     Out = case dict:find(BH, X) of
 	      error -> [];
 	      {ok, Val} -> Val
 	  end,
     {reply, Out, X}.
+-spec new({'signed',_,_,_,_,_,_},_,_,number()) -> 'ok'.
 new(Tx, ChIdLose, ChIdGain, Amount) ->
     %["signed",["channel_block",0,1,-500,2,[-6,["bet",-500,[-6,0,"/rmUU2AW8ecM6TSQbyIhuc/0GWW9RLzNNSFvx/5NONY=",35,17,["f",0,1],["f",1,1],["integer",2],18,["f",0,1],["f",1,2],["integer",1],19]]],24000,false,259,0,0,0],"TUVVQ0lBR0JnL0RsZTJ1L29LckM3R01KMm9Gemhrc0xSaEpkNm5TV2dTMzdwNkVaQWlFQTNmZG41Y3JYZmw4RnVXWDNINkMyeDlvZkFSQU56bzBRaVpmUDhsZkZ6a0U9",[-6],[-6]]
     CB = testnet_sign:data(Tx),
@@ -51,18 +60,22 @@ new(Tx, ChIdLose, ChIdGain, Amount) ->
     ChIdLose = hd(channel_manager:id(IdLose)),
     add(Code, ChIdLose, ChIdGain, Amount).
 
+-spec add(_,_,_,_) -> 'ok'.
 add(Bet, ChIdLose, ChIdGain, Amount) -> 
     %Make sure we can't add the same triple twice!!
     BH = hash:doit(Bet),
     L = check_hash(BH),
     true = not_in(L, ChIdLose, ChIdGain, Amount),
     gen_server:cast(?MODULE, {add, BH, ChIdLose, ChIdGain, Amount}).
+-spec not_in(maybe_improper_list(),_,_,_) -> boolean().
 not_in([], _, _, _) -> true;
 not_in([{LoseId, GainId, Amount}|_], LoseId, GainId, Amount) -> false;
 not_in([_|T], A, B, C) -> not_in(T, A, B, C).
+-spec del(5 | {'bet',_,_,_},_,_,_) -> 'ok'.
 del(BH, ChIdLose, ChIdGain, Amount) -> 
     %BH = hash:doit(Bet),
     gen_server:cast(?MODULE, {del, BH, ChIdLose, ChIdGain, Amount}).
+-spec delete({'channel_block',_,_,_,_,_,_,_,_,_,_,_},_) -> 'ok'.
 delete(CB, BetCode) ->
     BH = hash:doit(BetCode),
     Bet = bet_find(BH, channel_block_tx:bets(CB)),
@@ -84,6 +97,7 @@ delete(CB, BetCode) ->
     true = not_in(BH, BetsL),
     true = not_in(BH, BetsG),
     del(Bet, ChIdLose, ChIdGain, Amount).
+-spec not_in(_,maybe_improper_list()) -> boolean().
 not_in(_, []) -> true;
 not_in(Hash, [H|T]) -> 
     A = hash:doit(channel_block_tx:bet_code(H)),
@@ -91,12 +105,14 @@ not_in(Hash, [H|T]) ->
 	A == H -> false;
 	true -> not_in(Hash, T)
     end.
+-spec bet_find(_,nonempty_maybe_improper_list()) -> {'bet',_,_,_}.
 bet_find(BH, [H|T]) -> 
     A = hash:doit(channel_block_tx:bet_code(H)),
     if
 	A == BH -> H;
 	true -> bet_find(BH, T)
     end.
+-spec agree({'signed',_,_,_,_,_,_},integer(),_) -> any().
 agree(Tx, Amount, BH) ->
     %Make sure that money is being sent to us on the other side of the bet first. Look in channel_manager to see if they gave it.
     %Make sure it is the same amount as before.
@@ -129,24 +145,30 @@ agree(Tx, Amount, BH) ->
 	    K = channel_block_tx:acc1(OChannel)
     end,
     ChIdGain.
+-spec check_winner(_,_,_) -> any().
 check_winner(Bet, ChIdLose, Amount) -> 
     BH = hash:doit(Bet),
     L = check_hash(BH),
     check_winner2(ChIdLose, Amount, L).
+-spec check_winner2(_,_,nonempty_maybe_improper_list()) -> any().
 check_winner2(ChId, Amount, [{ChId, ChIdGain, Amount}|_]) -> 
     ChIdGain;
 check_winner2(ChId, Amount, [{_, _, _}|T]) -> 
     check_winner2(ChId, Amount, T).
+-spec check_loser(_,_,_) -> any().
 check_loser(BetCode, ChId, Amount) -> 
     BH = hash:doit(BetCode),
     L = check_hash(BH),
     check_loser2(ChId, Amount, L).
+-spec check_loser2(_,_,nonempty_maybe_improper_list()) -> any().
 check_loser2(ChId, Amount, [{ChIdLoser, ChId, Amount}|_]) -> 
     ChIdLoser;
 check_loser2(ChId, Amount, [{_, _, _}|T]) -> 
     check_loser2(ChId, Amount, T).
+-spec check_hash(_) -> any().
 check_hash(BH) -> 
     gen_server:call(?MODULE, {check, BH}).
+-spec test() -> 'success'.
 test() ->
     add(5, 1, 0, 0),
     add(5, 2, 0, 0),

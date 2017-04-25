@@ -1,6 +1,7 @@
 -module(delete_account_tx).
 -export([doit/4, make/4]).
 -record(da, {from = 0, nonce = 0, fee = 0, to = 0}).
+-spec make(_,_,_,_) -> {#da{nonce::number()},[any(),...]}.
 make(To, ID, Fee, Accounts) ->
     {_, Facc, Fproof} = account:get(ID, Accounts),
     {_, Tacc, Tproof} = account:get(To, Accounts),
@@ -8,6 +9,7 @@ make(To, ID, Fee, Accounts) ->
     Tx = #da{from = ID, nonce = account:nonce(Facc) + 1,
 	     to = To, fee = Fee},
     {Tx, [Fproof, Tproof]}.
+-spec doit(#da{fee::number()},_,_,_) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     From = Tx#da.from,
     To = Tx#da.to,

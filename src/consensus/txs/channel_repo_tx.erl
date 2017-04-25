@@ -4,6 +4,7 @@
 -export([make/5,doit/4]).
 -record(cr, {from = 0, nonce = 0, fee = 0, id = 0}).
 
+-spec make(_,_,_,_,_) -> {#cr{nonce::number()},[any(),...]}.
 make(From, ID, Fee, Accounts, Channels) ->
     {_, Acc, Proof} = account:get(From, Accounts),
     {_, _, CProof} = channel:get(ID, Channels),
@@ -11,6 +12,7 @@ make(From, ID, Fee, Accounts, Channels) ->
     Tx = #cr{from = From, nonce = N, fee = Fee, id = ID},
     {Tx, [Proof, CProof]}.
 
+-spec doit(#cr{},_,_,number()) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     From = Tx#cr.from,
     CID = Tx#cr.id,

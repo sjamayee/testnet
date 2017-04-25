@@ -2,6 +2,7 @@
 -export([doit/4, make/6]).
 -record(ca, {from = 0, to = 0, fee = 0, nonce = 0, address = <<"">>, amount = 0}).
 
+-spec make(_,_,_,_,_,_) -> {#ca{nonce::number()},[any(),...]}.
 make(Addr, Amount, Fee, From, To, Accounts) -> %To is a new ID. set it to any unused ID.
     A = if
 	    size(Addr) > 85 -> testnet_sign:pubkey2address(Addr);
@@ -10,6 +11,7 @@ make(Addr, Amount, Fee, From, To, Accounts) -> %To is a new ID. set it to any un
     {_, Acc, Proof} = account:get(From, Accounts),
     Tx = #ca{from = From, to = To, nonce = account:nonce(Acc) + 1, address = A, amount = Amount, fee = Fee},
     {Tx, [Proof]}.
+-spec doit(#ca{fee::number(),amount::number()},_,_,_) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     To = Tx#ca.to,
     {_RH, empty, _Proof} = account:get(To, Accounts),

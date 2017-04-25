@@ -23,20 +23,33 @@
 		  delay = 0%this is how long you have to wait since "last_modified" to do a channel_timeout_tx.
 		  }%
        ).
+-spec acc1(#channel{}) -> any().
 acc1(C) -> C#channel.acc1.
+-spec acc2(#channel{}) -> any().
 acc2(C) -> C#channel.acc2.
+-spec id(#channel{}) -> any().
 id(C) -> C#channel.id.
+-spec bal1(#channel{}) -> any().
 bal1(C) -> C#channel.bal1.
+-spec bal2(#channel{}) -> any().
 bal2(C) -> C#channel.bal2.
+-spec last_modified(#channel{}) -> any().
 last_modified(C) -> C#channel.last_modified.
+-spec mode(#channel{}) -> any().
 mode(C) -> C#channel.mode.
+-spec entropy(#channel{}) -> any().
 entropy(C) -> C#channel.entropy.
+-spec nonce(#channel{}) -> any().
 nonce(C) -> C#channel.nonce.
+-spec delay(#channel{}) -> any().
 delay(C) -> C#channel.delay.
+-spec rent(#channel{}) -> any().
 rent(C) -> C#channel.rent.
+-spec rent_direction(#channel{}) -> any().
 rent_direction(C) -> C#channel.rent_direction.
 
 
+-spec update(number(),_,_,_,number(),number(),_,_,integer()) -> #channel{id::char(),acc1::non_neg_integer(),acc2::non_neg_integer(),timeout_height::non_neg_integer(),last_modified::integer(),rent_direction::0 | 1,entropy::char()}.
 update(ID, Channels, Nonce, NewRent,Inc1, Inc2, Mode, Delay, Height) ->
     true = Inc1 + Inc2 >= 0,
     {_, Channel, _} = get(ID, Channels),
@@ -81,6 +94,7 @@ update(ID, Channels, Nonce, NewRent,Inc1, Inc2, Mode, Delay, Height) ->
 		    mode = Mode
 		   }.
     
+-spec new(_,_,_,_,_,_,_,number(),_) -> #channel{nonce::0,timeout_height::0,rent::number(),rent_direction::0 | 1,mode::0}.
 new(ID, Acc1, Acc2, Bal1, Bal2, Height, Entropy, Rent, Delay) ->
     D = if
 	Rent > 0 -> 1;
@@ -91,6 +105,7 @@ new(ID, Acc1, Acc2, Bal1, Bal2, Height, Entropy, Rent, Delay) ->
 	     last_modified = Height, entropy = Entropy,
 	     rent = abs(Rent), rent_direction = D,
 	     delay = Delay}.
+-spec serialize(#channel{id::integer(),acc1::integer(),acc2::integer(),bal1::integer(),bal2::integer(),nonce::integer(),timeout_height::integer(),last_modified::integer(),rent::integer(),rent_direction::integer(),mode::integer(),entropy::integer(),delay::integer()}) -> <<_:448>>.
 serialize(C) ->
     ACC = constants:acc_bits(),
     BAL = constants:balance_bits(),
@@ -119,6 +134,7 @@ serialize(C) ->
        (C#channel.delay):DB,
        Entropy:ENT,
        0:Pad>>.
+-spec deserialize(<<_:448>>) -> #channel{id::char(),acc1::non_neg_integer(),acc2::non_neg_integer(),bal1::non_neg_integer(),bal2::non_neg_integer(),nonce::non_neg_integer(),timeout_height::non_neg_integer(),last_modified::non_neg_integer(),rent::byte(),rent_direction::0 | 1,mode::0 | 1 | 2 | 3,entropy::char(),delay::non_neg_integer()}.
 deserialize(B) ->
     ACC = constants:acc_bits(),
     BAL = constants:balance_bits(),
@@ -150,11 +166,14 @@ deserialize(B) ->
 	     rent = B8, rent_direction = B9,
 	     mode = B10, entropy = B11, 
 	     delay = B12}.
+-spec write(#channel{id::integer(),acc1::integer(),acc2::integer(),bal1::integer(),bal2::integer(),nonce::integer(),timeout_height::integer(),last_modified::integer(),rent::integer(),rent_direction::integer(),mode::integer(),entropy::integer(),delay::integer()},_) -> any().
 write(Channel, Root) ->
     ID = Channel#channel.id,
     M = serialize(Channel),
     trie:put(ID, M, 0, Root,channels). %returns a pointer to the new root
+-spec id_size() -> 11.
 id_size() -> constants:key_length().
+-spec get(number(),_) -> {_,'empty' | #channel{id::char(),acc1::non_neg_integer(),acc2::non_neg_integer(),bal1::non_neg_integer(),bal2::non_neg_integer(),nonce::non_neg_integer(),timeout_height::non_neg_integer(),last_modified::non_neg_integer(),rent::byte(),rent_direction::0 | 1,mode::0 | 1 | 2 | 3,entropy::char(),delay::non_neg_integer()},_}.
 get(ID, Channels) ->
     true = (ID - 1) < math:pow(2, id_size()),
     {RH, Leaf, Proof} = trie:get(ID, Channels, channels),
@@ -163,11 +182,14 @@ get(ID, Channels) ->
 	    L -> deserialize(leaf:value(L))
 	end,
     {RH, V, Proof}.
+-spec delete(_,_) -> any().
 delete(ID,Channels) ->
     trie:delete(ID, Channels, channels).
+-spec root_hash(_) -> any().
 root_hash(Channels) ->
     trie:root_hash(channels, Channels).
     
+-spec test() -> 'success'.
 test() ->
     ID = 1,
     Acc1 = 1,

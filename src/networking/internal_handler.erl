@@ -5,6 +5,8 @@
 %httpc:request(post, {"http://127.0.0.1:3011/", [], "application/octet-stream", packer:pack({pubkey})}, [], []).
 %curl -i -d '[-6,"test"]' http://localhost:3011
 
+-spec handle(_,_) -> {'ok',_,_}.
+
 handle(Req, State) ->
     {ok, Data, _} = cowboy_req:body(Req),
     %io:fwrite("internal handler "),
@@ -18,9 +20,15 @@ handle(Req, State) ->
     {<<"Access-Control-Allow-Origin">>, <<"*">>}],
     {ok, Req2} = cowboy_req:reply(200, Headers, D, Req),
     {ok, Req2, State}.
+-spec init(_,_,_) -> {'ok',_,'no_state'}.
+
 init(_Type, Req, _Opts) -> {ok, Req, no_state}.
+-spec terminate(_,_,_) -> 'ok'.
+
 terminate(_Reason, _Req, _State) -> ok.
 -define(POP, <<1,6,3,87,3,5>>).
+-spec doit(_) -> any().
+
 doit({sign, Tx}) -> 
     {Accounts, _,_,_} = tx_pool:data(),
     {ok, keys:sign(Tx, Accounts)};

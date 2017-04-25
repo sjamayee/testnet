@@ -4,8 +4,10 @@
 -record(csc, {from, nonce, fee = 0, 
 	      scriptpubkey, scriptsig}).
 
+-spec scriptpubkey(#csc{}) -> any().
 scriptpubkey(X) -> X#csc.scriptpubkey.
 
+-spec make(_,_,_,_,_,_) -> {#csc{nonce::number()},[any(),...]}.
 make(From, Fee, ScriptPubkey, ScriptSig, Accounts, Channels) ->
     %true = is_list(ScriptSig),
     CID = spk:cid(testnet_sign:data(ScriptPubkey)),
@@ -18,6 +20,7 @@ make(From, Fee, ScriptPubkey, ScriptSig, Accounts, Channels) ->
 	      scriptsig = ScriptSig},
     {Tx, [Proof1, Proofc]}.
 
+-spec doit(#csc{fee::number()},_,_,_) -> {_,_}.
 doit(Tx, Channels, Accounts, NewHeight) ->
     From = Tx#csc.from, 
     SPK = Tx#csc.scriptpubkey,
@@ -52,6 +55,7 @@ doit(Tx, Channels, Accounts, NewHeight) ->
     spawn(fun() -> check_slash(From, Acc1, Acc2, SS, SPK, NewAccounts, NewChannels, NewCNonce) end), %If our channel is closing somewhere we don't like, then we need to use a channel_slash transaction to stop them and save our money.
     {NewChannels, NewAccounts}.
 
+-spec check_slash(_,_,_,nonempty_maybe_improper_list(),_,_,_,integer()) -> any().
 check_slash(From, Acc1, Acc2, TheirSS, SSPK, Accounts, Channels, TheirNonce) ->
     %if our partner is trying to close our channel without us, and we have a ScriptSig that can close the channel at a higher nonce, then we should make a channel_slash_tx to do that.
     %From = MyID,
@@ -69,6 +73,7 @@ check_slash(From, Acc1, Acc2, TheirSS, SSPK, Accounts, Channels, TheirNonce) ->
     Stx = keys:sign(Tx, Accounts),
     tx_pool_feeder:absorb(Stx),
     easy:sync().
+-spec next_ss(_,nonempty_maybe_improper_list(),{'spk',_,_,_,_,_,_,_,_,number(),number()},_,_,_,_) -> number() | {number(),number(),<<_:64,_:_*8>> | nonempty_maybe_improper_list(),_}.
 next_ss(From, TheirSS, SPK, Acc1, Acc2, Accounts, Channels) ->
     %this is customized for dice.
     {ok, CD} = channel_manager:read(From),

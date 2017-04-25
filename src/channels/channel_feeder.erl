@@ -16,20 +16,31 @@
 	     live = true,
 	     entropy = 0,
 	     cid}). %live is a flag. As soon as it is possible that the channel could be closed, we switch the flag to false. We keep trying to close the channel, until it is closed. We don't update the channel state at all.
+-spec me(#cd{}) -> any().
 me(X) -> X#cd.me.
+-spec cid('error' | integer() | {'ctc',_,_,_,_,_,_} | {'signed',_,_,_,_,_,_} | #cd{} | {'nc',_,_,_,_,_,_,_,_,_,_} | {'spk',_,_,_,_,_,_,_,_,_,_}) -> any().
 cid(X) when is_integer(X) ->
     cid(channel_manager:read(X));
 cid(X) when is_record(X, cd) -> X#cd.cid;
 cid(error) -> undefined;
 cid(X) -> cid(other(X)).
+-spec them(#cd{}) -> any().
 them(X) -> X#cd.them.
+-spec script_sig_them(#cd{}) -> any().
 script_sig_them(X) -> X#cd.ssthem.
+-spec script_sig_me(#cd{}) -> any().
 script_sig_me(X) -> X#cd.ssme.
+-spec init('ok') -> {'ok',[]}.
 init(ok) -> {ok, []}.
+-spec start_link() -> 'ignore' | {'error',_} | {'ok',pid()}.
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, ok, []).
+-spec code_change(_,_,_) -> {'ok',_}.
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
+-spec terminate(_,_) -> 'ok'.
 terminate(_, _) -> io:format("died!"), ok.
+-spec handle_info(_,_) -> {'noreply',_}.
 handle_info(_, X) -> {noreply, X}.
+-spec handle_cast(_,_) -> {'noreply',_}.
 handle_cast(garbage, X) ->
     %check if any of the channels haven't existed in the last free_constants:fork_tolerance() blocks. If it hasn't, then delete it.
     Keys = channel_manager:keys(),
@@ -90,6 +101,7 @@ handle_cast({close, SS, STx}, X) ->
     {noreply, X};
 handle_cast
 (_, X) -> {noreply, X}.
+-spec handle_call(_,_,_) -> {'reply',_,_}.
 handle_call({spend, SSPK, Amount}, _From, X) ->
 %giving us money in the channel.
     {Accounts, _,_,_} = tx_pool:data(),
@@ -146,6 +158,7 @@ handle_call({agree_simplification, Name, SSPK, OtherSS}, _From, X) ->
     update_to_me_internal(Return, SSPK),
     {reply, Return, X};
 handle_call(_, _From, X) -> {reply, X, X}.
+-spec update_to_me_internal({'signed',_,_,_,_,_,_},{'signed',_,_,_,_,_,_}) -> 'ok'.
 update_to_me_internal(OurSPK, SSPK) ->
     SPK = testnet_sign:data(SSPK),
     SPK = testnet_sign:data(OurSPK),
@@ -156,6 +169,7 @@ update_to_me_internal(OurSPK, SSPK) ->
     NewCD = OldCD#cd{them = SSPK, ssthem = OldCD#cd.ssme},
     channel_manager:write(Other, NewCD).
    
+-spec make_simplification_internal(_,'dice',nonempty_maybe_improper_list()) -> {_,_}.
 make_simplification_internal(Other, dice, OtherSS) ->
     %calculate who won the dice game, give them the money.
     {ok, OldCD} = channel_manager:read(Other),
@@ -171,6 +185,7 @@ make_simplification_internal(Other, dice, OtherSS) ->
     channel_manager:write(Other, NewCD),
     {keys:sign(NewSPK, Accounts), OurSecret}.%we should also return our secret.
 
+-spec make_bet_internal(_,'dice',[binary() | integer(),...],binary()) -> any().
 make_bet_internal(Other, dice, Vars, Secret) ->%this should only be called by the channel_feeder gen_server, because it updates the channel_manager.
     %SSme = dice:make_ss(SPK, Secret),
     %io:fwrite("channel feeder make_bet_internal. other is "),
@@ -188,28 +203,37 @@ make_bet_internal(Other, dice, Vars, Secret) ->%this should only be called by th
     channel_manager:write(Other, NewCD),
     keys:sign(SPK, Accounts).
 
+-spec make_bet(_,_,_,_) -> any().
 make_bet(Other, Name, Vars, Secret) ->
     gen_server:call(?MODULE, {make_bet, Other, Name, Vars, Secret}).
+-spec new_channel(_,_,_) -> 'ok'.
 new_channel(Tx, SSPK, Accounts) ->
     %io:fwrite("channel feeder inserting channel $$$$$$$$$$$$$$$$$$$$$$$$$$"),
     gen_server:cast(?MODULE, {new_channel, Tx, SSPK, Accounts}).
+-spec spend(_,_) -> any().
 spend(SPK, Amount) -> 
     gen_server:call(?MODULE, {spend, SPK, Amount}).
+-spec close(_,_) -> 'ok'.
 close(SS, Tx) ->
     gen_server:cast(?MODULE, {close, SS, Tx}).
+-spec lock_spend(_) -> 'ok'.
 lock_spend(_SPK) ->
 %giving us money conditionally, and asking us to forward it with a similar condition to someone else.
     %first check that this channel is in the on-chain state with sufficient depth
     %we need the arbitrage gen_server to exist first, before we can do this.
     ok.
+-spec update_to_me(_) -> any().
 update_to_me(SSPK) ->
     gen_server:call(?MODULE, {update_to_me, SSPK}).
     
     
+-spec agree_bet(_,_,_,_) -> any().
 agree_bet(Name, SSPK, Vars, Secret) -> 
     gen_server:call(?MODULE, {agree_bet, Name, SSPK, Vars, Secret}).
+-spec garbage() -> 'ok'.
 garbage() ->
     gen_server:cast(?MODULE, garbage).
+-spec garbage_helper([any()],_,_) -> 'ok'.
 garbage_helper([], _C, _OldC) -> ok;
 garbage_helper([H|T], C, OldC) -> 
     {ok, CD} = channel_manager:read(H),
@@ -229,6 +253,7 @@ garbage_helper([H|T], C, OldC) ->
     end,
     garbage_helper(T, C, OldC).
    
+-spec c_oldc() -> {_,_}.
 c_oldc() ->
     Top = block:read(top:doit()),
     Height = block:height(Top),
@@ -238,9 +263,11 @@ c_oldc() ->
     C = block:channels(Top),
     OldC = block:channels(Old),
     {C, OldC}.
+-spec depth_check(_) -> none().
 depth_check(SPK) -> 
     {C, OldC} = c_oldc(),
     depth_check2(SPK, C, OldC).
+-spec depth_check2(_,_,_) -> none().
 depth_check2(SPK, C, OldC) -> 
     %CID = spk:cid(SPK),
     PartnerID = other(SPK),
@@ -269,10 +296,12 @@ depth_check2(SPK, C, OldC) ->
 	true -> neither
     end.
 
+-spec get_bet('dice',[{'dice',[any(),...]},...],[binary() | integer(),...],{'spk',_,_,_,_,number(),number(),_,_,_,number()}) -> {'spk',_,_,_,nonempty_maybe_improper_list(),number(),number(),_,_,_,number()}.
 get_bet(Name, [{Name, Loc}|_], Vars, SPK) ->
     %io:fwrite("get_bets"),
     get_bet2(Name, Loc, Vars, SPK);
 get_bet(Name, [_|T], Vars, SPK) -> get_bet(Name, T, Vars, SPK).
+-spec get_bet2('dice',[atom() | [any()] | char(),...],[binary() | integer(),...],{'spk',_,_,_,_,number(),number(),_,_,_,number()}) -> {'spk',_,_,_,nonempty_maybe_improper_list(),number(),number(),_,_,_,number()}.
 get_bet2(dice, Loc, [Amount, Commit1, Commit2], SPK) ->
     %check that Amount is in a reasonable range based on the channel state.
     %we need my balance from channel:get, and from the Amount from the most recent spk they signed.
@@ -296,6 +325,7 @@ get_bet2(dice, Loc, [Amount, Commit1, Commit2], SPK) ->
     Bet = compile:doit(Loc, Front),
     [] = spk:bets(SPK),%for now we only make 1 bet per customer at a time, otherwise it would be possible for a customer to make us check their complicated script over and over on each bet, to see if it can close any of them.
     spk:apply_bet(Bet, SPK, 1000, 1000).
+-spec other({'ctc',_,_,_,_,_,_} | {'signed',_,_,_,_,_,_} | {'nc',_,_,_,_,_,_,_,_,_,_} | {'spk',_,_,_,_,_,_,_,_,_,_}) -> any().
 other(X) when element(1, X) == signed ->
     other(testnet_sign:data(X));
 other(SPK) when element(1, SPK) == spk ->
@@ -306,6 +336,7 @@ other(Tx) when element(1, Tx) == ctc ->
 other(Tx) when element(1, Tx) == nc ->
     other(new_channel_tx:acc1(Tx),
 	  new_channel_tx:acc2(Tx)).
+-spec other(_,_) -> any().
 other(Aid1, Aid2) ->
     K = keys:id(),
     Out = if
@@ -316,6 +347,7 @@ other(Aid1, Aid2) ->
     Out.
     
 	    
+-spec entropy([any(),...]) -> any().
 entropy([Aid1, Aid2]) ->
     Other = other(Aid1, Aid2),
     case channel_manager:read(Other) of
@@ -323,6 +355,7 @@ entropy([Aid1, Aid2]) ->
 	    CD#cd.entropy;
 	error -> 1
     end.
+-spec new_channel_check({'ctc',_,_,_,_,_,_} | {'signed',_,_,_,_,_,_} | {'nc',_,_,_,_,_,_,_,_,_,_} | {'spk',_,_,_,_,_,_,_,_,_,_}) -> boolean().
 new_channel_check(Tx) ->
     %make sure we aren't already storing a channel with the same CID/partner combo.
     Other = other(Tx),
@@ -336,12 +369,14 @@ new_channel_check(Tx) ->
 	error -> true %we have never used this CID partner combo before.
     end.
 
+-spec make_simplification(_,_,_) -> any().
 make_simplification(Other, Name, OtherSS) ->
     gen_server:call(?MODULE, 
 		    {make_simplification, 
 		     Other, 
 		     Name, 
 		     OtherSS}).
+-spec agree_simplification(_,_,_) -> any().
 agree_simplification(Name, SSPK, OtherSS) ->
     gen_server:call(?MODULE, 
 		    {agree_simplification,

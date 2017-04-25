@@ -6,6 +6,8 @@
 %curl -i -d '[-6,"test"]' http://localhost:3011
 %curl -i -d echotxt http://localhost:3010
 
+-spec handle(_,_) -> {'ok',_,_}.
+
 handle(Req, State) ->
     %{Length, Req2} = cowboy_req:body_length(Req),
     {ok, Data, Req3} = cowboy_req:body(Req),
@@ -17,9 +19,15 @@ handle(Req, State) ->
     {<<"Access-Control-Allow-Origin">>, <<"*">>}],
     {ok, Req4} = cowboy_req:reply(200, Headers, D, Req3),
     {ok, Req4, State}.
+-spec init(_,_,_) -> {'ok',_,'no_state'}.
+
 init(_Type, Req, _Opts) -> {ok, Req, no_state}.
+-spec terminate(_,_,_) -> 'ok'.
+
 terminate(_Reason, _Req, _State) -> ok.
 -define(WORD, 10000000).%10 megabytes.
+-spec doit(_) -> any().
+
 doit({pubkey}) -> {ok, keys:pubkey()};
 %doit({height}) -> {ok, block_tree:height()};
 %doit({total_coins}) -> {ok, block_tree:total_coins()};

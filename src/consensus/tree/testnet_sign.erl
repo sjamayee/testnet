@@ -2,36 +2,55 @@
 -export([test/0,test2/1,test3/0,sign_tx/5,sign/2,verify_sig/3,shared_secret/2,verify/2,data/1,revealed/1,empty/1,empty/0,set_revealed/2,verify_1/2,verify_2/2, pubkey2address/1, valid_address/1, hard_new_key/0,new_key/0,pub/1,pub2/1,address2binary/1,binary2address/1]).
 -record(signed, {data="", sig="", pub = "", sig2="", pub2="", revealed=[]}).
 -define(cs, 8). %checksum size
+-spec pub(#signed{}) -> any().
 pub(X) -> X#signed.pub.
+-spec pub2(#signed{}) -> any().
 pub2(X) -> X#signed.pub2.
+-spec empty() -> #signed{data::[],sig::[],pub::[],sig2::[],pub2::[],revealed::[]}.
 empty() -> #signed{}.
+-spec empty(_) -> #signed{sig::[],pub::[],sig2::[],pub2::[],revealed::[]}.
 empty(X) -> #signed{data=X}.
+-spec data(#signed{}) -> any().
 data(X) -> X#signed.data.
+-spec set_revealed(#signed{},_) -> #signed{}.
 set_revealed(X, R) -> #signed{data = X#signed.data, sig = X#signed.sig, pub = X#signed.pub, sig2 = X#signed.sig2, pub2 = X#signed.pub2, revealed = R}.
+-spec revealed(#signed{}) -> any().
 revealed(X) -> X#signed.revealed.
+-spec en(binary() | [1..255]) -> binary().
 en(X) -> base64:encode(X).
+-spec de(binary() | [1..255]) -> binary().
 de(X) -> base64:decode(X).
+-spec params() -> {{'prime_field',<<_:112,_:_*16>>} | {'characteristic_two_field',1..1114111,{'tpbasis',9 | 15 | 36 | 62 | 68 | 69 | 74 | 87 | 120 | 158} | {'ppbasis',1 | 2 | 3 | 5,2 | 3 | 5 | 6 | 7,7 | 8 | 10 | 11 | 12 | 43 | 56 | 83 | 85}},{<<_:8,_:_*8>>,<<_:8,_:_*8>>,'none' | <<_:160>>},<<_:136,_:_*16>>,<<_:64,_:_*8>>,<<_:8,_:_*8>>}.
 params() -> crypto:ec_curve(secp256k1).
+-spec shared_secret(binary() | [1..255],binary() | [1..255]) -> binary().
 shared_secret(Pub, Priv) -> en(crypto:compute_key(ecdh, de(Pub), de(Priv), params())).
 %to_bytes(X) -> term_to_binary(X).
+-spec to_bytes(_) -> any().
 to_bytes(X) -> packer:pack(X).
+-spec generate() -> any().
 generate() -> crypto:generate_key(ecdh, params()).
+-spec new_key() -> {binary(),binary()}.
 new_key() -> %We keep this around for the encryption library. it is used to generate 1-time encryption keys.
     {Pub, Priv} = generate(),%crypto:generate_key(ecdh, params()),
     {en(Pub), en(Priv)}.
+-spec sign(_,binary() | [1..255]) -> binary().
 sign(S, Priv) -> en(crypto:sign(ecdsa, sha256, to_bytes(S), [de(Priv), params()])).
+-spec verify_sig(_,binary() | [1..255],binary() | [1..255]) -> any().
 verify_sig(S, Sig, Pub) -> 
     SD = de(Sig),
     PD = de(Pub),
     crypto:verify(ecdsa, sha256, to_bytes(S), SD, [PD, params()]).
+-spec verify_1(#signed{sig::binary() | [1..255],pub::binary() | [1..255]},_) -> boolean().
 verify_1(Tx, Addr) -> 
     Pub = Tx#signed.pub,
     B = verify_sig(Tx#signed.data, Tx#signed.sig, Pub),
     (Addr == pubkey2address(Pub)) and B.
+-spec verify_2(#signed{sig2::binary() | [1..255],pub2::binary() | [1..255]},_) -> boolean().
 verify_2(Tx, Addr) -> 
     Pub2 = Tx#signed.pub2,
     B = verify_sig(Tx#signed.data, Tx#signed.sig2, Pub2),
     (Addr == pubkey2address(Pub2)) and B.
+-spec verify_both(#signed{sig::binary() | [1..255],pub::binary() | [1..255],sig2::binary() | [1..255],pub2::binary() | [1..255]},_,_) -> boolean().
 verify_both(Tx, Addr1, Addr2) ->
     X = verify_1(Tx, Addr1),
     Y = verify_2(Tx, Addr1),
@@ -40,10 +59,12 @@ verify_both(Tx, Addr1, Addr2) ->
         Y -> verify_1(Tx, Addr2);
         true -> false
     end.
+-spec type_check(_) -> boolean().
 type_check(Type) -> %these are the types that get signed twice
     lists:any(fun(X) -> X==Type end, [gc, nc, ctc, spk]).
 	%(Type == gc) or (Type == nc) or (Type == ctc) or (type == spk)
 
+-spec verify(#signed{data::tuple(),sig::binary() | [1..255],pub::binary() | [1..255]},_) -> boolean().
 verify(SignedTx, Accounts) ->
     Tx = SignedTx#signed.data,
     N1 = element(2, Tx),
@@ -58,6 +79,7 @@ verify(SignedTx, Accounts) ->
 	true -> 
 	    verify_1(SignedTx, account:addr(Acc1))
     end.
+-spec sign_tx(tuple(),_,_,_,_) -> {'error',<<_:88>>} | #signed{data::tuple()}.
 sign_tx(SignedTx, Pub, Priv, ID, Accounts) when element(1, SignedTx) == signed ->
     Tx = SignedTx#signed.data,
     R = SignedTx#signed.revealed,
@@ -102,7 +124,9 @@ sign_tx(Tx, Pub, Priv, ID, Accounts) ->
     end,
     ST.
 
+-spec checksum(<<_:96>>) -> <<_:8>>.
 checksum(X) -> checksum(0, X).
+-spec checksum(non_neg_integer(),bitstring()) -> <<_:8>>.
 checksum(N, <<H:4, T/bitstring>>) ->
     checksum(N+H, <<T/bitstring>>);
 checksum(N, <<>>) ->
@@ -129,6 +153,7 @@ checksum(N, <<>>) ->
 %36+20=56
 %So at the minimum, an address would need to have 60 bits.
 -define(AddressEntropy, constants:address_entropy()).
+-spec pubkey2address(_) -> binary().
 pubkey2address(P) when size(P) > 66 ->
     pubkey2address(base64:decode(P));
 pubkey2address(P) ->
@@ -142,23 +167,27 @@ pubkey2address(P) ->
 	%_ ->
 	%    {error, invalid_pubkey}
     %end.
+-spec address2binary(binary()) -> <<_:96>>.
 address2binary(A) ->
     S = ?AddressEntropy,
     <<C:?cs, B:S>> = base58:base58_to_binary(binary_to_list((A))),
     <<C:?cs>> = checksum(<<B:S>>),
     <<B:S>>.
+-spec binary2address(<<_:96>>) -> binary().
 binary2address(B) -> 
     S = ?AddressEntropy,
     <<A:S>> = B,
     <<C:?cs>> = checksum(B),
     D = <<C:?cs, A:S>>,
     list_to_binary(base58:binary_to_base58(D)).
+-spec valid_address(binary()) -> boolean().
 valid_address(A) ->
     AB = ?AddressEntropy,
     << C:?cs, B:AB >> = base58:base58_to_binary(binary_to_list(A)),
     D = checksum(<<B:AB>>),
     << C:?cs >> == D.
 
+-spec test() -> 'success'.
 test() ->
     %{Address, Pub, Priv} = hard_new_key(), %recomputing is too slow. better to write it down, and reuse it each time.
     {Address, Pub, Priv} = hard_new_key(),
@@ -205,16 +234,20 @@ test() ->
     false = verify_both(Signed, Address, Address),
     true = valid_address(Address),
     success.
+-spec hard_new_key() -> {binary(),binary(),binary()}.
 hard_new_key() ->
     {Pub, Priv} = new_key(),
     Address = pubkey2address(Pub),
     {Address, Pub, Priv}.
+-spec times(non_neg_integer(),fun(() -> any())) -> 'ok'.
 times(0, _) -> ok;
 times(N, F) ->
     F(),
     times(N-1, F).
+-spec test2(non_neg_integer()) -> 'ok'.
 test2(X) ->
     times(X, fun() -> generate() end ).
+-spec test3() -> {integer(),_}.
 test3() ->
     timer:tc(sign, hard_new_key, []).
 		     

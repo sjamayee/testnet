@@ -1,12 +1,14 @@
 -module(grow_channel_tx).
 -export([doit/4, make/7, good/1]).
 -record(gc, {acc1 = 0, acc2 = 0, fee = 0, nonce = 0, inc1 = 0, inc2 = 0, rent = 0, channel_nonce = none, id = -1}).
+-spec good(_) -> 'true'.
 good(_Tx) ->
     %make sure they aren't taking our money.
     %check that it is still meeting the min_channel_ratio.
     %check that it is a valid transaction.
     true.
     
+-spec make(_,_,_,_,_,_,_) -> {#gc{nonce::number(),channel_nonce::'none'},[any(),...]}.
 make(ID,Accounts,Channels,Inc1,Inc2,Rent,Fee) ->
     {_, C, CProof} = channel:get(ID, Channels),
     A1 = channel:acc1(C),
@@ -19,6 +21,7 @@ make(ID,Accounts,Channels,Inc1,Inc2,Rent,Fee) ->
 	     inc2 = Inc2, rent = Rent},
     {Tx, [CProof, Proof1, Proof2]}.
     
+-spec doit(#gc{inc1::number(),inc2::number()},_,_,_) -> {_,_}.
 doit(Tx,Channels,Accounts,NewHeight) ->
     %it already exists with these two accounts.
     ID = Tx#gc.id,

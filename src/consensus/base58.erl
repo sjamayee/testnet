@@ -7,6 +7,7 @@
 %% @spec b58char(integer()) -> 'error' | byte()
 
 -spec b58char(integer()) -> 'error' | byte().
+
 b58char(0) -> $1;
 b58char(1) -> $2;
 b58char(2) -> $3;
@@ -72,6 +73,7 @@ b58char(_) -> error.
 %% @spec charb58(byte()) -> 'error' | integer()
 
 -spec charb58(byte()) -> 'error' | integer().
+
 charb58($1) -> 0;
 charb58($2) -> 1;
 charb58($3) -> 2;
@@ -141,6 +143,7 @@ charb58(_) -> error.
 
 -spec check_base58(base58()) -> boolean().
 -type base58() :: string().
+
 check_base58(Base58) ->
     lists:all(fun(C) -> C =/= 'error' end, lists:map(fun(C) -> charb58(C) end, Base58)).
 
@@ -149,6 +152,7 @@ check_base58(Base58) ->
 %% @spec integer_to_base58(integer()) -> 'error' | base58()
 
 -spec integer_to_base58(integer()) -> 'error' | base58().
+
 integer_to_base58(0) -> [];
 integer_to_base58(Integer) ->
     Quot = Integer div 58,
@@ -161,6 +165,7 @@ integer_to_base58(Integer) ->
 %% @spec base58_to_integer(char(),base58()) -> 'error' | integer()
 
 -spec base58_to_integer(char(),base58()) -> 'error' | integer().
+
 base58_to_integer(C, []) -> C;
 base58_to_integer(C, [X | Xs]) ->
     base58_to_integer(C * 58 + charb58(X), Xs).
@@ -171,6 +176,7 @@ base58_to_integer(C, [X | Xs]) ->
 %% @spec base58_to_integer(base58()) -> 'error' | integer()
 
 -spec base58_to_integer(base58()) -> 'error' | integer().
+
 base58_to_integer([]) -> error;
 base58_to_integer([Char]) -> charb58(Char);
 base58_to_integer([Char | Str]) ->
@@ -183,6 +189,7 @@ base58_to_integer([Char | Str]) ->
 %% @spec base58_to_binary(base58()) -> binary()
 
 -spec base58_to_binary(base58()) -> binary().
+
 base58_to_binary(Base58) ->
     Bin = binary:encode_unsigned(base58_to_integer(Base58)),
     %The conversion between the binary and the integer strips any leading zero bytes that 
@@ -196,6 +203,7 @@ base58_to_binary(Base58) ->
 %% @spec binary_to_base58(binary()) -> 'error' | base58()
 
 -spec binary_to_base58(binary()) -> 'error' | base58().
+
 binary_to_base58(Binary) when is_binary(Binary) ->
     case integer_to_base58(binary:decode_unsigned(Binary)) of
 	error -> error;
@@ -207,6 +215,7 @@ binary_to_base58(Binary) when is_binary(Binary) ->
 %% @doc Pad a "1" character to a Base58 stream to account for any stripped zeros
 %%
 %% @spec binaryPad(list(), base58())
+-spec binaryPad([byte()],['error' | 1..255]) -> ['error' | 1..255].
 binaryPad([0 | Rest], Bin) ->
     binaryPad(Rest, "1" ++ Bin);
 binaryPad(_, Bin) -> Bin.
@@ -215,6 +224,7 @@ binaryPad(_, Bin) -> Bin.
 %%
 %% @spec zeroPad(base58(), binary())
 
+-spec zeroPad([byte()],bitstring()) -> bitstring().
 zeroPad("1" ++ Rest, Base58) ->
     zeroPad(Rest, <<0, Base58/binary>>);
 zeroPad(_, Base58) -> Base58.

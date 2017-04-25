@@ -1,6 +1,7 @@
 -module(test_txs).
 -export([test/0, test/1]).
  
+-spec test() -> 'success'.
 test() ->
     unlocked = keys:status(),
     Pub = constants:master_pub(),
@@ -15,9 +16,11 @@ test() ->
     S = test(6),
     S = test(7),
     S.
+-spec absorb(_) -> 'ok'.
 absorb(Tx) -> 
     tx_pool_feeder:absorb(Tx),
     timer:sleep(400).
+-spec test(1 | 2 | 3 | 4 | 5 | 6 | 7) -> 'success'.
 test(1) ->
     io:fwrite(" create_account tx\n"),
     %create account, spend, delete account

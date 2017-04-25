@@ -1,20 +1,25 @@
 -module(gas_price).
 -export([test/0, timer0/0, timer1/0, timer2/0, timer3/0, timer4/0, timer5/0, timer6/0, timer7/0]).
+-spec timer0() -> [{'integer',1},...].
 timer0() -> %4 microseconds
     [{integer, 1}].
+-spec timer1() -> any().
 timer1() -> %17
     compiler:compile(<<" 
 1 2 swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap swap 
 ">>).
+-spec timer2() -> any().
 timer2() -> %352
     compiler:compile(<<" 
 :b YWJj
 hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash hash 
 ">>).
+-spec timer3() -> any().
 timer3() -> %24
     compiler:compile(<<" 
 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 :i 1 
 ">>).
+-spec timer4() -> any().
 timer4() -> %550
     Swaps = compiler:compile(<<" 
 : a 1 ;
@@ -83,6 +88,7 @@ timer4() -> %550
 : gfedbc 1 ;
 ">>),
     Swaps.
+-spec timer5() -> any().
 timer5() -> %257
     Swaps = compiler:compile(<<" 
 : a 1 ;
@@ -119,11 +125,13 @@ timer5() -> %257
 : fedbc 1 ;
 ">>),
     Swaps.
+-spec timer6() -> any().
 timer6() -> %334
     compiler:compile(<<"
  : func dup :i 0 == if else :i 1 - recurse call then ;
  :i 64 func call
 ">>).
+-spec timer7() -> any().
 timer7() -> %27
     X = <<":b QkpiMzFWb2U2a0hkWGxFbVRkSzhueGVPeHAvVUs3enJUdFRaMWFWUmxFL2d4TldqMlJlYngrQm1IZ0RuVGU4MHNxMWZSTVBSWGpFNW55N2N3OWU0ckF3PQ==
 :b QkpiMzFWb2U2a0hkWGxFbVRkSzhueGVPeHAvVUs3enJUdFRaMWFWUmxFL2d4TldqMlJlYngrQm1IZ0RuVGU4MHNxMWZSTVBSWGpFNW55N2N3OWU0ckF3PQ==
@@ -134,6 +142,7 @@ timer7() -> %27
     Z = << Y/binary, Y/binary, Y/binary, Y/binary >>,
     compiler:compile(Z).
     
+-spec test() -> [{integer(),_},...].
 test() ->
     [timer:tc(language, run, [timer0(), 10000]),%3 microseconds
      timer:tc(language, run, [timer1(), 10000]),%14

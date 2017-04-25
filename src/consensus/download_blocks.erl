@@ -2,7 +2,9 @@
 -export([sync_cron/0, sync_cron/1, sync_all/2, 
 	 sync/3, absorb_txs/1, tuples2lists/1]).
 
+-spec sync_cron() -> no_return().
 sync_cron() -> sync_cron(30000).
+-spec sync_cron('infinity' | non_neg_integer()) -> no_return().
 sync_cron(N) -> %30000 is 30 second.
     timer:sleep(N),
     Height = block:height(block:read(top:doit())),
@@ -11,11 +13,13 @@ sync_cron(N) -> %30000 is 30 second.
     sync_all(P2, Height),
     sync_cron(N).
 
+-spec rank_filter(_) -> any().
 rank_filter(P) ->
     %probabilistically select a peer. prefer lower ranked pers.
     P.
     
     
+-spec sync_all([{_,_}],_) -> 'success'.
 sync_all([], _) -> success;
 sync_all([{IP, Port}|T], Height) ->
     spawn(fun() ->
@@ -24,6 +28,7 @@ sync_all([{IP, Port}|T], Height) ->
     %spawn(download_blocks, sync, [IP, Port, Height]),
     %timer:sleep(3000),
     sync_all(T, Height).
+-spec sync(_,_,_) -> any().
 sync(IP, Port, MyHeight) ->
     io:fwrite("syncing with peer"),
     %lower their ranking
@@ -57,6 +62,7 @@ sync(IP, Port, MyHeight) ->
 
     %peers:update_score(IP, Port, Score).
     %raise their ranking.
+-spec get_blocks(number(),byte(),_,_,[any()]) -> any().
 get_blocks(_, 0, _, _, L) -> L;
 get_blocks(H, _, _, _, L) when H < 1 -> L;
 get_blocks(Height, N, IP, Port, L) -> 
@@ -64,6 +70,7 @@ get_blocks(Height, N, IP, Port, L) ->
 	 fun(X) -> get_blocks(Height-1, N-1, IP, Port, [X|L])
 	 end).
     
+-spec trade_blocks(_,_,[any(),...],number()) -> 'error' | 'ok'.
 trade_blocks(_IP, _Port, L, 1) ->
     sync3(L);
     %sync3(get_blocks(1, 100, IP, Port, [])++L);
@@ -88,6 +95,7 @@ trade_blocks(IP, Port, [PrevBlock|L], Height) ->
 		    send_blocks(IP, Port, top:doit(), PrevHash, [], 0)
 	    end
     end.
+-spec send_blocks(_,_,_,binary(),[tuple()],non_neg_integer()) -> 'ok'.
 send_blocks(IP, Port, T, T, L, _N) -> 
     %io:fwrite("finished sending blocks"),
     send_blocks2(IP, Port, L);
@@ -100,23 +108,28 @@ send_blocks(IP, Port, TopHash, CommonHash, L, N) ->
 	    PrevHash = block:prev_hash(BlockPlus),
 	    send_blocks(IP, Port, PrevHash, CommonHash, [BlockPlus|L], N+1)
     end.
+-spec send_blocks2(_,_,[tuple()]) -> 'ok'.
 send_blocks2(_, _, []) -> ok;
 send_blocks2(IP, Port, [Block|T]) -> 
     %io:fwrite("give block !!!!!!!"),
     talker:talk({give_block, block:pow_block(Block)}, IP, Port),
     send_blocks2(IP, Port, T).
     
+-spec sync3([any()]) -> 'ok'.
 sync3([]) -> ok;
 sync3([B|T]) -> 
     %io:fwrite("sync 3\n"),
     block_absorber:doit(B),
     sync3(T).
+-spec absorb_txs([any()]) -> 'ok'.
 absorb_txs([]) -> ok;
 absorb_txs([H|T]) -> 
     tx_pool_feeder:absorb(H),
     absorb_txs(T).
+-spec talk({'peers'} | {'top'} | {'txs'} | {'block',number()},_,_,fun((_) -> any())) -> any().
 talk(CMD, IP, Port, F) ->
     talk(CMD, IP, Port, F, 100).
+-spec talk({'peers'} | {'top'} | {'txs'} | {'block',number()},_,_,fun((_) -> any()),byte()) -> any().
 talk(_, _, _, _, 0) -> error;
 talk(CMD, IP, Port, F, N) ->
     case talker:talk(CMD, IP, Port) of
@@ -126,6 +139,7 @@ talk(CMD, IP, Port, F, N) ->
 		       
     end.
 	   
+-spec get_txs(_,_) -> any().
 get_txs(IP, Port) ->
     talk({txs}, IP, Port, 
 	 fun(X) ->
@@ -133,6 +147,7 @@ get_txs(IP, Port) ->
 		 {_,_,_,Mine} = tx_pool:data(),
 		 talker:talk({txs, Mine}, IP, Port)
 	 end).
+-spec trade_peers(_,_) -> any().
 trade_peers(IP, Port) ->
     talk({peers}, IP, Port,
 	 fun(X) ->
@@ -140,6 +155,7 @@ trade_peers(IP, Port) ->
 		 talker:talk({peers, MyPeers}, IP, Port),
 		 peers:add(X)
 	 end).
+-spec tuples2lists(_) -> any().
 tuples2lists(X) when is_tuple(X) ->
     tuples2lists(tuple_to_list(X));
 tuples2lists([]) -> [];
