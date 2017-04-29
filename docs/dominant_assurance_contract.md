@@ -7,7 +7,7 @@ There are 4 possibilities:
 3) Bob contributes $9000 and the bridge is built. Bob is $1000 richer.
 4) Bob contributes $9000 and the bridge is not built. Bob gets his money back plus interest, he is $1000 richer.
 5) Bob contributes $5000 and the bridge is built. Bob is $5000 richer.
-6) Bob contributes $5000 and the bridge is not built. Bob is $500 richer.
+6) Bob contributes $5000 and the bridge is not built. Bob is $5000 poorer.
 
 Option 1 is the most profitable, but it is risky because option 2 might happen.
 If Bob donates $9000, then he knows he will get $1000 profit either way. His risk is completely gone.
